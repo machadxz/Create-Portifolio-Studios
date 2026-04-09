@@ -1,0 +1,311 @@
+.planos-page {
+  padding: 60px 0 120px;
+  min-height: calc(100vh - 80px);
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  color: #000;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  font-size: 48px;
+  font-weight: 900;
+  margin-bottom: 16px;
+  animation: fadeSlideUp 0.6s ease;
+}
+
+.page-header p {
+  font-size: 18px;
+  color: var(--text-secondary);
+  max-width: 500px;
+  margin: 0 auto;
+  animation: fadeSlideUp 0.6s ease 0.1s both;
+}
+
+.trial-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 12px 24px;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  color: #ffd700;
+  animation: fadeSlideUp 0.6s ease 0.2s both;
+}
+
+.trial-banner strong {
+  font-weight: 800;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+  max-width: 900px;
+  margin: 0 auto 60px;
+}
+
+.plan-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 40px;
+  transition: all var(--transition-base);
+  animation: fadeSlideUp 0.6s ease 0.3s both;
+}
+
+.plan-card:hover {
+  transform: translateY(-8px);
+}
+
+.plan-card.highlighted {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-glow);
+  transform: scale(1.02);
+}
+
+.plan-card.highlighted:hover {
+  transform: scale(1.02) translateY(-8px);
+}
+
+.plan-badge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: var(--accent);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.plan-header {
+  text-align: center;
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.plan-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  margin: 0 auto 20px;
+  color: var(--text-secondary);
+}
+
+.plan-card.highlighted .plan-icon {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.plan-header h3 {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+.plan-price {
+  margin-bottom: 12px;
+}
+
+.plan-price .price {
+  font-size: 48px;
+  font-weight: 900;
+  color: var(--accent);
+}
+
+.plan-price .period {
+  display: block;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.plan-description {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.plan-features {
+  margin-bottom: 32px;
+}
+
+.plan-features li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.plan-features li:last-child {
+  border-bottom: none;
+}
+
+.plan-features li svg {
+  flex-shrink: 0;
+}
+
+.plan-features li.included {
+  color: var(--text-primary);
+}
+
+.plan-features li.included svg {
+  color: #22c55e;
+}
+
+.plan-features li.excluded {
+  color: var(--text-muted);
+}
+
+.plan-features li.excluded svg {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.plan-cta {
+  text-align: center;
+}
+
+.plan-cta .btn {
+  width: 100%;
+}
+
+.guarantee {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  max-width: 700px;
+  margin: 0 auto 80px;
+  padding: 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+.guarantee-icon {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  border-radius: var(--radius-lg);
+  color: white;
+}
+
+.guarantee-content h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.guarantee-content p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.faq {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.faq h2 {
+  font-size: 28px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.faq-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.faq-item {
+  padding: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-base);
+}
+
+.faq-item:hover {
+  border-color: var(--accent);
+}
+
+.faq-item h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.faq-item p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .plans-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .plan-card.highlighted {
+    transform: none;
+  }
+  
+  .plan-card.highlighted:hover {
+    transform: translateY(-8px);
+  }
+  
+  .faq-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .guarantee {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .page-header h1 {
+    font-size: 32px;
+  }
+}

@@ -1,0 +1,148 @@
+.portfolio-showcase {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 24px 0;
+}
+
+.showcase-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.showcase-header h2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.showcase-header p {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.showcase-loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+
+.showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.showcase-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.showcase-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--card-accent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.card-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  margin: 0 auto 12px;
+}
+
+.showcase-card h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.card-cargo {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 12px;
+}
+
+.card-stats {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.card-stats span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  background: var(--card-accent);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.card-btn:hover {
+  opacity: 0.9;
+}
+
+.showcase-cta {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.showcase-cta p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.showcase-cta button {
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.showcase-cta button:hover {
+  background: var(--accent);
+  color: white;
+}

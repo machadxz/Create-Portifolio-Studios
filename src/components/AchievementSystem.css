@@ -1,0 +1,115 @@
+.achievement-system {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.achievement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.achievement-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.achievement-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.achievement-stats .points {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.achievement-progress {
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.achievement-progress .progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.achievement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.achievement-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.achievement-card.locked {
+  opacity: 0.5;
+}
+
+.achievement-card.unlocked {
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.achievement-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border-radius: 50%;
+  color: var(--text-muted);
+}
+
+.achievement-card.unlocked .achievement-icon {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  color: white;
+}
+
+.achievement-info {
+  flex: 1;
+}
+
+.achievement-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.achievement-desc {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.achievement-points {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f59e0b;
+  padding: 4px 8px;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: 12px;
+}

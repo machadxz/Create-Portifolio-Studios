@@ -1,0 +1,74 @@
+.share-tools {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.share-tools h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.share-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.share-option svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.share-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.share-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.share-desc {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.share-info input {
+  width: 100%;
+  padding: 6px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.share-option button {
+  padding: 8px;
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.share-option button:hover {
+  transform: scale(1.05);
+}

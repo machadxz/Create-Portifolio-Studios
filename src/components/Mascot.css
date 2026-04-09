@@ -1,0 +1,221 @@
+.mascot {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 999;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(50px) scale(0.8);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mascot.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.mascot:hover {
+  transform: scale(1.1);
+}
+
+.mascot-body {
+  width: 80px;
+  height: 80px;
+  position: relative;
+  z-index: 2;
+}
+
+.mascot-svg {
+  width: 100%;
+  height: 100%;
+  transition: transform 0.3s ease;
+}
+
+.mascot-glow {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 20px;
+  border-radius: 50%;
+  filter: blur(15px);
+  opacity: 0.5;
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.3; transform: translateX(-50%) scale(1); }
+  50% { opacity: 0.6; transform: translateX(-50%) scale(1.2); }
+}
+
+.mascot-sparkles {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.sparkle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform-origin: center;
+  opacity: 0;
+  animation: sparkleAnim 2s ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes sparkleAnim {
+  0%, 100% { 
+    opacity: 0;
+    transform: rotate(var(--rotation)) translateY(-50px) scale(0);
+  }
+  50% { 
+    opacity: 1;
+    transform: rotate(var(--rotation)) translateY(-60px) scale(1);
+  }
+}
+
+.mascot-bubble {
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-size: 14px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  box-shadow: var(--shadow-md);
+}
+
+.mascot-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: var(--bg-card);
+  border-bottom: 0;
+}
+
+.mascot:hover .mascot-bubble {
+  opacity: 1;
+}
+
+.mascot.idle .mascot-svg {
+  animation: idleBounce 3s ease-in-out infinite;
+}
+
+@keyframes idleBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.mascot.bounce .mascot-svg {
+  animation: bounce 0.6s ease;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-20px); }
+  50% { transform: translateY(-10px); }
+  70% { transform: translateY(-15px); }
+}
+
+.mascot.wave .mascot-svg {
+  animation: wave 0.8s ease;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  75% { transform: rotate(10deg); }
+}
+
+.mascot.spin .mascot-svg {
+  animation: spin 1s ease;
+}
+
+@keyframes spin {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+
+.mascot.excited .mascot-svg {
+  animation: excited 0.3s ease infinite;
+}
+
+@keyframes excited {
+  0%, 100% { transform: scale(1) rotate(-2deg); }
+  50% { transform: scale(1.05) rotate(2deg); }
+}
+
+.mascot.jump .mascot-svg {
+  animation: jump 0.5s ease;
+}
+
+@keyframes jump {
+  0% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-30px) scale(1.1); }
+  50% { transform: translateY(-30px) scale(1.1); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.eye {
+  transition: transform 0.2s ease;
+}
+
+.mascot:hover .eye {
+  transform: scaleY(1.2);
+}
+
+.pupil {
+  transition: transform 0.2s ease;
+}
+
+.mascot:hover .pupil {
+  transform: translateY(-1px);
+}
+
+.mouth {
+  transition: d 0.3s ease;
+}
+
+.mascot:hover .mouth {
+  d: path("M 30 60 Q 50 80 70 60");
+}
+
+.blush {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.mascot:hover .blush {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .mascot {
+    width: 60px;
+    height: 60px;
+    bottom: 20px;
+    right: 20px;
+  }
+  
+  .mascot-body {
+    width: 60px;
+    height: 60px;
+  }
+}
