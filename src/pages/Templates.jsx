@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../lib/api';
 import { Eye, Check, Sparkles } from 'lucide-react';
 import './Templates.css';
 
@@ -35,7 +36,7 @@ const Templates = () => {
     setMessage(null);
     
     try {
-      const response = await fetch('/api/portfolios', {
+      const response = await apiFetch('/api/portfolios', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -60,7 +61,7 @@ const Templates = () => {
           throw new Error('Erro ao atualizar template');
         }
       } else {
-        const createResponse = await fetch('/api/portfolios', {
+        const createResponse = await apiFetch('/api/portfolios', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../lib/api';
 import { useTheme } from '../context/ThemeContext';
 import { 
   Check, 
@@ -27,7 +28,7 @@ const Checkout = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const response = await fetch('/api/users/upgrade', {
+      const response = await apiFetch('/api/users/upgrade', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

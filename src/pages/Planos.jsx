@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../lib/api';
 import { useTheme } from '../context/ThemeContext';
 import { 
   Check, 
@@ -20,7 +21,7 @@ const Planos = () => {
 
   const handleUpgrade = async () => {
     try {
-      const response = await fetch('/api/users/upgrade', {
+      const response = await apiFetch('/api/users/upgrade', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });

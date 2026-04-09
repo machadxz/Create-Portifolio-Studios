@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { apiFetch } from '../lib/api';
 import { 
   Users, Crown, BarChart3, FolderOpen, Settings, FileText,
   RefreshCw, Check, X, AlertCircle, Eye, Trash2, Edit,
@@ -43,35 +44,35 @@ const Admin = () => {
       const headers = { Authorization: `Bearer ${token}` };
       
       console.log('1. Carregando stats...');
-      const statsRes = await fetch('/api/admin/stats', { headers });
+      const statsRes = await apiFetch('/api/admin/stats', { headers });
       const statsData = statsRes.ok ? await statsRes.json() : { stats: {} };
       console.log('   stats status:', statsRes.status, 'data:', statsData);
       setStats(statsData.stats || {});
       
       console.log('2. Carregando users...');
-      const usersRes = await fetch('/api/admin/users', { headers });
+      const usersRes = await apiFetch('/api/admin/users', { headers });
       const usersData = usersRes.ok ? await usersRes.json() : { users: [] };
       console.log('   users status:', usersRes.status, 'data:', usersData);
       setUsers(usersData.users || []);
       
       console.log('3. Carregando settings...');
-      const settingsRes = await fetch('/api/admin/settings', { headers });
+      const settingsRes = await apiFetch('/api/admin/settings', { headers });
       const settingsData = settingsRes.ok ? await settingsRes.json() : { settings: {} };
       console.log('   settings status:', settingsRes.status, 'data:', settingsData);
       setSettings(settingsData.settings || {});
       
       console.log('4. Carregando portfolios...');
-      const portfoliosRes = await fetch('/api/admin/portfolios', { headers });
+      const portfoliosRes = await apiFetch('/api/admin/portfolios', { headers });
       const portfoliosData = portfoliosRes.ok ? await portfoliosRes.json() : { portfolios: [] };
       setPortfolios(portfoliosData.portfolios || []);
       
       console.log('5. Carregando templates...');
-      const templatesRes = await fetch('/api/admin/templates', { headers });
+      const templatesRes = await apiFetch('/api/admin/templates', { headers });
       const templatesData = templatesRes.ok ? await templatesRes.json() : { templates: [] };
       setTemplates(templatesData.templates || []);
       
       console.log('6. Carregando analytics...');
-      const analyticsRes = await fetch('/api/admin/analytics', { headers });
+      const analyticsRes = await apiFetch('/api/admin/analytics', { headers });
       const analyticsData = analyticsRes.ok ? await analyticsRes.json() : { analytics: null };
       setAnalytics(analyticsData.analytics);
       
@@ -163,7 +164,7 @@ const Admin = () => {
   const saveSettings = async (newSettings) => {
     console.log('Salvando configurações:', newSettings);
     try {
-      const res = await fetch('/api/admin/settings', {
+      const res = await apiFetch('/api/admin/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(newSettings)

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AIAssistant from '../components/AIAssistant';
+import { apiFetch } from '../lib/api';
 import { 
   Save, Eye, Download, Sparkles, Plus, Trash2, Monitor, Smartphone,
   Link, Copy, Check, X, Palette, Github, Zap, Type, MousePointer2,
@@ -379,7 +380,7 @@ const Studio = () => {
     setSaving(true);
     try {
       const portfolioData = { ...portfolio, editorElements };
-      await fetch('/api/portfolios', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(portfolioData) });
+      await apiFetch('/api/portfolios', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(portfolioData) });
       setAutoSaveStatus('Salvo');
       setTimeout(() => setAutoSaveStatus(''), 2000);
     } catch (err) { console.error('Erro ao salvar:', err); }

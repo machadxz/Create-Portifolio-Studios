@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../lib/api';
 import { useTheme } from '../context/ThemeContext';
 import { 
   Upload, 
@@ -70,7 +71,7 @@ const PublishTemplate = () => {
         preview: formData.preview
       };
 
-      const response = await fetch('/api/marketplace/templates', {
+      const response = await apiFetch('/api/marketplace/templates', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

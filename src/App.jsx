@@ -19,6 +19,7 @@ import StudioEditor from './components/editor/StudioEditor';
 import Navbar from './components/Navbar';
 import SplashScreen from './components/SplashScreen';
 import MaintenanceScreen from './components/MaintenanceScreen';
+import { apiFetch } from './lib/api';
 import './styles/App.css';
 
 function AppContent() {
@@ -38,7 +39,7 @@ function AppContent() {
   useEffect(() => {
     const checkMaintenance = async () => {
       try {
-        const res = await fetch('/api/maintenance');
+        const res = await apiFetch('/api/maintenance');
         const data = await res.json();
         setMaintenanceMode(data.manutencao || false);
       } catch (err) {

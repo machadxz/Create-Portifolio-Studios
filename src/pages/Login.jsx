@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../lib/api';
 import { useTheme } from '../context/ThemeContext';
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import './Auth.css';
@@ -27,7 +28,7 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await fetch('/api/users/login', {
+      const response = await apiFetch('/api/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
