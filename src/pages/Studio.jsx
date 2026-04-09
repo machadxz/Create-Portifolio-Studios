@@ -3,6 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AIAssistant from '../components/AIAssistant';
+import PortfolioChecklist from '../components/PortfolioChecklist';
+import SEOOptimizer from '../components/SEOOptimizer';
+import ProjectTemplates from '../components/ProjectTemplates';
+import CaseStudyBuilder from '../components/CaseStudyBuilder';
+import ProposalBuilder from '../components/ProposalBuilder';
+import PricingCalculator from '../components/PricingCalculator';
+import VersionControl from '../components/VersionControl';
 import { apiFetch } from '../lib/api';
 import { 
   Save, Eye, Download, Sparkles, Plus, Trash2, Monitor, Smartphone,
@@ -235,6 +242,7 @@ const Studio = () => {
   const [activeSection, setActiveSection] = useState('info');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showAiModal, setShowAiModal] = useState(false);
+  const [showRecruiterPreview, setShowRecruiterPreview] = useState(false);
   
   const [editorElements, setEditorElements] = useState([]);
   const [selectedElement, setSelectedElement] = useState(null);
@@ -485,8 +493,37 @@ const Studio = () => {
     { id: 'info', label: 'Info' },
     { id: 'projects', label: 'Projetos' },
     { id: 'design', label: 'Design' },
-    { id: 'editor', label: 'Editor' }
+    { id: 'editor', label: 'Editor' },
+    { id: 'tools', label: 'Tools' }
   ];
+
+  const applyProjectTemplate = (template) => {
+    const projeto = {
+      titulo: template.name,
+      descricao: `${template.description}. Secoes: ${template.sections.join(', ')}`,
+      link: '#'
+    };
+    setPortfolio((prev) => ({ ...prev, projetos: [...prev.projetos, projeto] }));
+  };
+
+  const saveCaseStudyProject = (caseStudy) => {
+    const projeto = {
+      titulo: caseStudy.titulo,
+      descricao: `${caseStudy.overview || ''} ${caseStudy.problema ? `Problema: ${caseStudy.problema}.` : ''} ${caseStudy.solucao ? `Solucao: ${caseStudy.solucao}.` : ''}`.trim(),
+      link: caseStudy.link || '#'
+    };
+    setPortfolio((prev) => ({ ...prev, projetos: [...prev.projetos, projeto] }));
+  };
+
+  const restoreFromVersion = (versionData) => {
+    if (!versionData) return;
+    if (versionData.portfolio) {
+      setPortfolio(versionData.portfolio);
+      setEditorElements(versionData.editorElements || []);
+      return;
+    }
+    setPortfolio(versionData);
+  };
 
   return (
     <div className="studio">
@@ -509,6 +546,7 @@ const Studio = () => {
             <button className={previewMode === 'desktop' ? 'active' : ''} onClick={() => setPreviewMode('desktop')}><Monitor size={18} /></button>
             <button className={previewMode === 'mobile' ? 'active' : ''} onClick={() => setPreviewMode('mobile')}><Smartphone size={18} /></button>
           </div>
+          <button className={`btn btn-secondary ${showRecruiterPreview ? 'active' : ''}`} onClick={() => setShowRecruiterPreview((prev) => !prev)}><Eye size={18} />Modo Recrutador</button>
           <button className="btn btn-secondary" onClick={generateShareLink}><Share2 size={18} />Compartilhar</button>
           <button className="btn btn-secondary" onClick={exportHTML}><Download size={18} />Exportar</button>
           <button className="btn btn-secondary" onClick={() => setShowAiModal(true)}><Sparkles size={18} />Gerar IA</button>
@@ -604,6 +642,22 @@ const Studio = () => {
                 </div>
               </div>
             )}
+            {activeSection === 'tools' && (
+              <div className="sidebar-section">
+                <h3>Ferramentas Pro</h3>
+                <PortfolioChecklist portfolio={portfolio} />
+                <VersionControl
+                  portfolioData={{ portfolio, editorElements }}
+                  onRestore={restoreFromVersion}
+                  currentVersion={historyStep}
+                />
+                <SEOOptimizer portfolio={portfolio} />
+                <ProjectTemplates onSelect={applyProjectTemplate} />
+                <CaseStudyBuilder onSave={saveCaseStudyProject} />
+                <ProposalBuilder />
+                <PricingCalculator />
+              </div>
+            )}
           </div>
         )}
         <div className="studio-preview">
@@ -620,9 +674,17 @@ const Studio = () => {
                   <div className="preview-skills">{portfolio.skills.length > 0 ? portfolio.skills.map((skill, i) => <span key={i} className="preview-skill">{skill}</span>) : <span className="preview-empty">Skills</span>}</div>
                 </div>
                 <div className="preview-section">
-                  <h2>Projetos</h2>
-                  <div className="preview-projects">{portfolio.projetos.length > 0 ? portfolio.projetos.map((project, i) => <div key={i} className="preview-project"><h3>{project.titulo}</h3><p>{project.descricao}</p>{project.link && <a href={project.link}>Ver →</a>}</div>) : <span className="preview-empty">Projetos</span>}</div>
+                  <h2>{showRecruiterPreview ? 'Top Projetos' : 'Projetos'}</h2>
+                  <div className="preview-projects">{portfolio.projetos.length > 0 ? portfolio.projetos.slice(0, showRecruiterPreview ? 3 : portfolio.projetos.length).map((project, i) => <div key={i} className="preview-project"><h3>{project.titulo}</h3><p>{project.descricao}</p>{project.link && <a href={project.link}>Ver →</a>}</div>) : <span className="preview-empty">Projetos</span>}</div>
                 </div>
+                {showRecruiterPreview && (
+                  <div className="preview-section">
+                    <h2>Contato Rapido</h2>
+                    <div className="preview-actions">
+                      <button className="preview-custom-button">Chamar para Entrevista</button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
