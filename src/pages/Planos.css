@@ -56,10 +56,11 @@
 
 .plans-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 32px;
-  max-width: 900px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+  max-width: 1400px;
   margin: 0 auto 60px;
+  perspective: 1000px;
 }
 
 .plan-card {
@@ -67,13 +68,61 @@
   background: var(--bg-card);
   border: 2px solid var(--border-color);
   border-radius: var(--radius-xl);
-  padding: 40px;
-  transition: all var(--transition-base);
+  padding: 24px;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, border-color 0.4s ease;
   animation: fadeSlideUp 0.6s ease 0.3s both;
+  display: flex;
+  flex-direction: column;
+  transform-style: preserve-3d;
+  cursor: pointer;
+  overflow: visible;
+}
+
+.plan-card::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: calc(var(--radius-xl) + 4px);
+  background: linear-gradient(45deg, var(--accent), transparent, var(--accent), transparent, var(--accent), transparent, var(--accent));
+  background-size: 300% 300%;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  animation: borderRotate 3s linear infinite;
+}
+
+.plan-card::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: calc(var(--radius-xl) + 2px);
+  background: transparent;
+  z-index: -1;
+  border: 2px solid transparent;
+  border-image: linear-gradient(45deg, var(--accent), #f59e0b, #22c55e, #3b82f6, var(--accent)) 1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
 }
 
 .plan-card:hover {
-  transform: translateY(-8px);
+  transform: rotateY(-25deg) rotateX(8deg) scale(1.02);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+  z-index: 10;
+  border-color: var(--accent);
+}
+
+.plan-card:hover::before {
+  opacity: 1;
+}
+
+.plan-card:active {
+  transform: rotateY(-12deg) rotateX(4deg) scale(1.01);
 }
 
 .plan-card.highlighted {
@@ -82,8 +131,23 @@
   transform: scale(1.02);
 }
 
+.plan-card.highlighted::before {
+  opacity: 0.6;
+  animation: borderRotate 2s linear infinite;
+}
+
 .plan-card.highlighted:hover {
-  transform: scale(1.02) translateY(-8px);
+  transform: scale(1.05) rotateY(-25deg) rotateX(8deg);
+}
+
+.plan-card.highlighted:hover::before {
+  opacity: 1;
+}
+
+@keyframes borderRotate {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .plan-badge {
@@ -160,11 +224,53 @@
 
 .plan-features li {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  font-size: 14px;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 12px;
   border-bottom: 1px solid var(--border-color);
+}
+
+.plan-goal-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 8px;
+  border: 1px solid;
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+}
+
+.current-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  z-index: 10;
+}
+
+.plan-card .plan-icon {
+  width: 48px;
+  height: 48px;
+}
+
+.plan-price .price {
+  font-size: 28px;
+}
+
+.plan-header h3 {
+  font-size: 20px;
 }
 
 .plan-features li:last-child {

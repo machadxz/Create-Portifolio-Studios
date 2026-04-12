@@ -159,10 +159,10 @@ const TemplateDetail = () => {
                     <Download size={20} />
                     Baixar Grátis
                   </>
-                ) : user?.plano === 'SUB' ? (
+                ) : user?.plano === 'SUB' || user?.plano === 'STARTER' ? (
                   <>
                     <Download size={20} />
-                    Baixar Grátis (PRO)
+                    Baixar Grátis (Starter)
                   </>
                 ) : (
                   <>
@@ -172,10 +172,10 @@ const TemplateDetail = () => {
                 )}
               </button>
 
-              {!template.gratuito && user?.plano !== 'SUB' && (
+              {!template.gratuito && user?.plano !== 'SUB' && user?.plano !== 'STARTER' && (
                 <Link to="/planos" className="btn btn-secondary btn-lg">
                   <Star size={20} />
-                  Ver Planos PRO
+                  Ver Planos Starter
                 </Link>
               )}
             </div>

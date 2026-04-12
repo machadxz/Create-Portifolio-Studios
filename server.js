@@ -1,13 +1,207 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const { v4: uuidv4 } = require('uuid');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import { v4 as uuidv4 } from 'uuid';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+
+dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000'],
+    credentials: true
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'cps-secret-key-2024';
+
+// Chat de suporte em tempo real
+const supportChats = new Map(); // userId -> { socketId, messages: [], status: 'waiting'|'active'|'closed' }
+const adminSockets = new Set();
+
+io.on('connection', (socket) => {
+  console.log('Nova conexão:', socket.id);
+  
+  // Usuário entra no chat de suporte
+  socket.on('joinSupport', (userData) => {
+    const { userId, nome, email, plano } = userData;
+    
+    supportChats.set(userId, {
+      socketId: socket.id,
+      nome,
+      email,
+      plano,
+      messages: [],
+      status: 'waiting',
+      startedAt: new Date().toISOString()
+    });
+    
+    // Notificar admins
+    adminSockets.forEach(adminSocket => {
+      adminSocket.emit('newSupportRequest', {
+        userId,
+        nome,
+        email,
+        plano,
+       hora: new Date().toISOString()
+      });
+    });
+    
+    socket.emit('supportJoined', { userId, status: 'waiting' });
+    console.log(`Usuário ${nome} (${email}) entrou no suporte`);
+  });
+  
+  // Admin entra no painel
+  socket.on('adminJoin', () => {
+    adminSockets.add(socket.id);
+    socket.emit('adminJoined', { activeChats: Array.from(supportChats.entries()) });
+    console.log('Admin conectado ao suporte');
+  });
+  
+  // Usuário envia mensagem
+  socket.on('sendMessage', (data) => {
+    const { userId, mensagem } = data;
+    const chat = supportChats.get(userId);
+    
+    if (chat) {
+      const message = {
+        id: uuidv4(),
+        texto: mensagem,
+        tipo: 'user',
+        timestamp: new Date().toISOString()
+      };
+      chat.messages.push(message);
+      
+      // Enviar para admins
+      adminSockets.forEach(adminSocket => {
+        adminSocket.emit('newMessage', { userId, message });
+      });
+    }
+  });
+  
+  // Admin responde
+  socket.on('adminSendMessage', (data) => {
+    const { userId, mensagem } = data;
+    const chat = supportChats.get(userId);
+    
+    if (chat) {
+      const message = {
+        id: uuidv4(),
+        texto: mensagem,
+        tipo: 'admin',
+        timestamp: new Date().toISOString()
+      };
+      chat.messages.push(message);
+      
+      // Enviar resposta para usuário
+      io.to(chat.socketId).emit('newMessage', { userId, message });
+    }
+  });
+  
+  // Admin aceita chat
+  socket.on('acceptChat', (userId) => {
+    const chat = supportChats.get(userId);
+    if (chat) {
+      chat.status = 'active';
+      io.to(chat.socketId).emit('chatAccepted', { adminNome: 'Suporte CPS' });
+    }
+  });
+  
+  // Admin fecha chat
+  socket.on('closeChat', (userId) => {
+    const chat = supportChats.get(userId);
+    if (chat) {
+      chat.status = 'closed';
+      io.to(chat.socketId).emit('chatClosed', { motivo: 'Conversa encerrada pelo suporte' });
+      supportChats.delete(userId);
+    }
+  });
+  
+  // Usuário sai do chat
+  socket.on('leaveSupport', (userId) => {
+    const chat = supportChats.get(userId);
+    if (chat) {
+      adminSockets.forEach(adminSocket => {
+        adminSocket.emit('userLeft', { userId, nome: chat.nome });
+      });
+      supportChats.delete(userId);
+    }
+  });
+  
+  // Admin sai
+  socket.on('adminLeave', () => {
+    adminSockets.delete(socket.id);
+  });
+  
+  // Desconexão
+  socket.on('disconnect', () => {
+    // Remover de admin se estava conectado
+    adminSockets.delete(socket.id);
+    
+    // Encontrar e remover usuário do chat
+    for (const [userId, chat] of supportChats.entries()) {
+      if (chat.socketId === socket.id) {
+        adminSockets.forEach(adminSocket => {
+          adminSocket.emit('userDisconnected', { userId, nome: chat.nome });
+        });
+        supportChats.delete(userId);
+      }
+    }
+    
+    console.log('Desconexão:', socket.id);
+  });
+});
+
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000'],
+  credentials: true
+}));
+
+const PLAN_IDS = {
+  FREE: 'FREE',
+  STARTER: 'STARTER',
+  GROWTH: 'GROWTH',
+  REVENUE: 'REVENUE',
+  EMPIRE: 'EMPIRE'
+};
+
+const PLAN_DEFS = {
+  [PLAN_IDS.FREE]: { days: null, paid: false },
+  [PLAN_IDS.STARTER]: { days: 30, paid: true },
+  [PLAN_IDS.GROWTH]: { days: 30, paid: true },
+  [PLAN_IDS.REVENUE]: { days: 30, paid: true },
+  [PLAN_IDS.EMPIRE]: { days: 30, paid: true }
+};
+
+const normalizePlan = (plan) => {
+  console.log('normalizePlan input:', plan);
+  if (plan === 'SUB' || plan === 'STAR' || plan === 'PRESTIGIO' || plan === 'PRO') return PLAN_IDS.STARTER;
+  if (plan === 'EMPIRE') {
+    console.log('Returning EMPIRE');
+    return PLAN_IDS.EMPIRE;
+  }
+  if (PLAN_DEFS[plan]) return plan;
+  return PLAN_IDS.FREE;
+};
+
+const applyPlanToUser = (user, plan) => {
+  const normalized = normalizePlan(plan);
+  user.plano = normalized;
+  const now = new Date();
+  if (normalized === PLAN_IDS.FREE) {
+    user.planExpiration = null;
+    user.trialExpiration = null;
+  } else {
+    user.trialExpiration = null;
+    user.planExpiration = new Date(now.getTime() + PLAN_DEFS[normalized].days * 24 * 60 * 60 * 1000).toISOString();
+  }
+};
 
 app.use(cors());
 app.use(express.json());
@@ -34,7 +228,7 @@ const db = { users: [], portfolios: [], templates: [], reviews: [], settings: {
     nome: 'André Machado',
     email: 'andremmachad@gmail.com',
     senha: hashedPassword,
-    plano: 'SUB',
+    plano: 'EMPIRE',
     trialExpiration: null,
     createdAt: new Date().toISOString(),
     isAdmin: true
@@ -148,16 +342,23 @@ app.post('/api/users/register', async (req, res) => {
     if (db.users.find(u => u.email === email)) return res.status(400).json({ error: 'Email já cadastrado' });
     const hashedPassword = await bcrypt.hash(senha, 10);
     const now = new Date();
+    
+    // Verificar se é o email do admin
+    const isAdminEmail = email === 'andremmachad@gmail.com';
+    const userPlan = isAdminEmail ? PLAN_IDS.EMPIRE : PLAN_IDS.FREE;
+    
     const user = {
-      uid: uuidv4(), nome, email, senha: hashedPassword, plano: 'FREE',
-      trialExpiration: new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-      createdAt: now.toISOString()
+      uid: uuidv4(), nome, email, senha: hashedPassword, plano: userPlan,
+      trialExpiration: null,
+      planExpiration: null,
+      createdAt: now.toISOString(),
+      isAdmin: isAdminEmail
     };
     db.users.push(user);
     const token = jwt.sign({ uid: user.uid, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({
       message: 'Usuário registrado com sucesso',
-      user: { uid: user.uid, nome: user.nome, email: user.email, plano: user.plano, trialExpiration: user.trialExpiration },
+      user: { uid: user.uid, nome: user.nome, email: user.email, plano: user.plano, trialExpiration: user.trialExpiration, planExpiration: user.planExpiration },
       token
     });
   } catch (error) {
@@ -173,14 +374,16 @@ app.post('/api/users/login', async (req, res) => {
     const isValid = await bcrypt.compare(senha, user.senha);
     if (!isValid) return res.status(401).json({ error: 'Credenciais inválidas' });
     const token = jwt.sign({ uid: user.uid, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+    console.log('Login user:', user.email, 'plano field:', user.plano, 'normalized:', normalizePlan(user.plano));
     res.json({
       message: 'Login realizado com sucesso',
-      user: { 
+      user: {
         uid: user.uid, 
         nome: user.nome, 
         email: user.email, 
-        plano: user.plano, 
+        plano: normalizePlan(user.plano), 
         trialExpiration: user.trialExpiration,
+        planExpiration: user.planExpiration,
         isAdmin: user.isAdmin || false
       },
       token
@@ -197,7 +400,7 @@ app.get('/api/users/profile', (req, res) => {
     const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
     const user = db.users.find(u => u.uid === decoded.uid);
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
-    res.json({ user: { uid: user.uid, nome: user.nome, email: user.email, plano: user.plano, trialExpiration: user.trialExpiration } });
+    res.json({ user: { uid: user.uid, nome: user.nome, email: user.email, plano: normalizePlan(user.plano), trialExpiration: user.trialExpiration, planExpiration: user.planExpiration } });
   } catch (error) {
     res.status(401).json({ error: 'Token inválido' });
   }
@@ -210,8 +413,11 @@ app.post('/api/users/upgrade', (req, res) => {
     const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
     const user = db.users.find(u => u.uid === decoded.uid);
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
-    user.plano = 'SUB';
-    res.json({ message: 'Upgrade realizado!', user: { uid: user.uid, nome: user.nome, email: user.email, plano: user.plano, trialExpiration: user.trialExpiration } });
+    const { plan } = req.body || {};
+    const selectedPlan = normalizePlan(plan || PLAN_IDS.STARTER);
+    if (selectedPlan === PLAN_IDS.FREE) return res.status(400).json({ error: 'Plano inválido para upgrade' });
+    applyPlanToUser(user, selectedPlan);
+    res.json({ message: 'Upgrade realizado!', user: { uid: user.uid, nome: user.nome, email: user.email, plano: user.plano, trialExpiration: user.trialExpiration, planExpiration: user.planExpiration } });
   } catch (error) {
     res.status(401).json({ error: 'Token inválido' });
   }
@@ -285,34 +491,56 @@ const verifyAdmin = (authHeader) => {
 app.get('/api/admin/users', (req, res) => {
   const auth = verifyAdmin(req.headers.authorization);
   if (auth.error) return res.status(auth.status).json({ error: auth.error });
-  res.json({ users: db.users.map(u => ({ uid: u.uid, nome: u.nome, email: u.email, plano: u.plano, isAdmin: u.isAdmin, trialExpiration: u.trialExpiration })) });
+  res.json({ users: db.users.map(u => ({ uid: u.uid, nome: u.nome, email: u.email, plano: normalizePlan(u.plano), isAdmin: u.isAdmin, trialExpiration: u.trialExpiration, planExpiration: u.planExpiration, createdAt: u.createdAt })) });
 });
 
 app.get('/api/admin/stats', (req, res) => {
   const auth = verifyAdmin(req.headers.authorization);
   if (auth.error) return res.status(auth.status).json({ error: auth.error });
-  res.json({ stats: { users: { total: db.users.length, free: db.users.filter(u => u.plano === 'FREE').length, sub: db.users.filter(u => u.plano === 'SUB').length, expired: 0 }, portfolios: { total: db.portfolios.length } } });
+  const normalizedUsers = db.users.map((u) => ({ ...u, plano: normalizePlan(u.plano) }));
+  const paidCount = normalizedUsers.filter((u) => u.plano !== PLAN_IDS.FREE).length;
+  res.json({
+    stats: {
+      users: {
+        total: db.users.length,
+        free: normalizedUsers.filter((u) => u.plano === PLAN_IDS.FREE).length,
+        paid: paidCount,
+        starter: normalizedUsers.filter((u) => u.plano === PLAN_IDS.STARTER).length,
+        growth: normalizedUsers.filter((u) => u.plano === PLAN_IDS.GROWTH).length,
+        revenue: normalizedUsers.filter((u) => u.plano === PLAN_IDS.REVENUE).length,
+        empire: normalizedUsers.filter((u) => u.plano === PLAN_IDS.EMPIRE).length,
+        expired: 0
+      },
+      portfolios: { total: db.portfolios.length }
+    }
+  });
 });
 
 app.put('/api/admin/users/:uid/plan', (req, res) => {
-  const auth = verifyAdmin(req.headers.authorization);
-  if (auth.error) return res.status(auth.status).json({ error: auth.error });
-    
+  try {
+    const auth = verifyAdmin(req.headers.authorization);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
     const { plano } = req.body;
     const targetUser = db.users.find(u => u.uid === req.params.uid);
     if (!targetUser) return res.status(404).json({ error: 'Usuário não encontrado' });
     
-    targetUser.plano = plano;
-    if (plano === 'SUB') {
-      targetUser.trialExpiration = null;
-    } else {
-      const now = new Date();
-      targetUser.trialExpiration = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000).toISOString();
-    }
+    applyPlanToUser(targetUser, plano);
     
     res.json({ message: 'Plano atualizado', user: { uid: targetUser.uid, nome: targetUser.nome, email: targetUser.email, plano: targetUser.plano, trialExpiration: targetUser.trialExpiration } });
   } catch (error) {
     res.status(401).json({ error: 'Token inválido' });
+  }
+});
+
+app.post('/api/admin/force-empire', (req, res) => {
+  const admin = db.users.find(u => u.email === 'andremmachad@gmail.com');
+  if (admin) {
+    admin.plano = 'EMPIRE';
+    admin.planExpiration = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    res.json({ message: 'Plano EMPIRE forçado', user: { email: admin.email, plano: admin.plano } });
+  } else {
+    res.status(404).json({ error: 'Admin não encontrado' });
   }
 });
 
@@ -498,21 +726,22 @@ app.delete('/api/admin/templates/:id', (req, res) => {
 });
 
 app.get('/api/admin/analytics', (req, res) => {
-  const auth = verifyAdmin(req.headers.authorization);
-  if (auth.error) return res.status(auth.status).json({ error: auth.error });
-  
-  const totalVisualizacoes = db.portfolios.reduce((acc, p) => acc + (p.analytics?.visualizacoes || 0), 0);
-  const totalVisitantes = db.portfolios.reduce((acc, p) => acc + (p.analytics?.visitantes?.size || 0), 0);
-  
-  const topPortfolios = db.portfolios
-    .map(p => ({ ...p, visualizacoes: p.analytics?.visualizacoes || 0 }))
-    .sort((a, b) => b.visualizacoes - a.visualizacoes)
-    .slice(0, 10);
-  
-  const topTemplates = [...db.templates]
-    .sort((a, b) => b.downloads - a.downloads)
-    .slice(0, 10);
-    
+  try {
+    const auth = verifyAdmin(req.headers.authorization);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+    const totalVisualizacoes = db.portfolios.reduce((acc, p) => acc + (p.analytics?.visualizacoes || 0), 0);
+    const totalVisitantes = db.portfolios.reduce((acc, p) => acc + (p.analytics?.visitantes?.size || 0), 0);
+
+    const topPortfolios = db.portfolios
+      .map(p => ({ ...p, visualizacoes: p.analytics?.visualizacoes || 0 }))
+      .sort((a, b) => b.visualizacoes - a.visualizacoes)
+      .slice(0, 10);
+
+    const topTemplates = [...db.templates]
+      .sort((a, b) => b.downloads - a.downloads)
+      .slice(0, 10);
+
     res.json({
       analytics: {
         totalVisualizacoes,
@@ -525,7 +754,7 @@ app.get('/api/admin/analytics', (req, res) => {
       }
     });
   } catch (error) {
-    res.status(401).json({ error: 'Token inválido' });
+    res.status(500).json({ error: 'Erro ao buscar analytics' });
   }
 });
 
@@ -1048,4 +1277,97 @@ app.get('/api/marketplace/categorias', (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`CPS Backend running on port ${PORT}`));
+app.post('/api/tools/ats-score', (req, res) => {
+  try {
+    const { portfolio } = req.body || {};
+    const nome = (portfolio?.nome || '').trim();
+    const bio = (portfolio?.bio || '').trim();
+    const skills = portfolio?.skills || [];
+    const projetos = portfolio?.projetos || [];
+    const linkedProjects = projetos.filter((p) => (p?.link || '').trim()).length;
+
+    const score = Math.max(
+      0,
+      Math.min(
+        100,
+        (nome ? 15 : 0) +
+          (bio.length >= 80 ? 25 : bio.length >= 30 ? 10 : 0) +
+          Math.min(skills.length * 8, 30) +
+          Math.min(projetos.length * 8, 24) +
+          (linkedProjects > 0 ? 6 : 0)
+      )
+    );
+
+    res.json({
+      score,
+      checklist: [
+        { id: 'nome', ok: Boolean(nome), label: 'Nome profissional preenchido' },
+        { id: 'bio', ok: bio.length >= 80, label: 'Bio com 80+ caracteres' },
+        { id: 'skills', ok: skills.length >= 5, label: '5+ skills cadastradas' },
+        { id: 'projects', ok: projetos.length >= 3, label: '3+ projetos' },
+        { id: 'links', ok: linkedProjects > 0, label: 'Projeto com link real' }
+      ]
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao calcular ATS score' });
+  }
+});
+
+app.post('/api/tools/headlines', (req, res) => {
+  try {
+    const { portfolio } = req.body || {};
+    const nome = portfolio?.nome || 'Profissional';
+    const skills = portfolio?.skills || [];
+    const headlines = [
+      `${nome} | ${skills[0] || 'Especialista'} focado em resultado`,
+      `${skills[0] || 'Tech'} + ${skills[1] || 'Produto'} para entregas de alto impacto`,
+      `${nome} - Portfolio com execucao objetiva e valor de negocio`
+    ];
+    res.json({ headlines });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao gerar headlines' });
+  }
+});
+
+app.post('/api/tools/cta-suggestions', (req, res) => {
+  try {
+    const ctas = [
+      'Vamos conversar sobre seu projeto? Me chame agora.',
+      'Disponivel para vagas e freelas remotos. Entre em contato.',
+      'Posso ajudar sua equipe a acelerar entregas com qualidade.'
+    ];
+    res.json({ ctas });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao gerar CTAs' });
+  }
+});
+
+app.post('/api/tools/weekly-roadmap', (req, res) => {
+  try {
+    res.json({
+      roadmap: [
+        'Dia 1: revisar bio e headline principal',
+        'Dia 2: atualizar 1 projeto com problema/solucao/resultado',
+        'Dia 3: reforcar skills para vaga alvo',
+        'Dia 4: otimizar CTA e contato',
+        'Dia 5: enviar portfolio para 5 oportunidades com mensagem personalizada'
+      ]
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao gerar roadmap' });
+  }
+});
+
+app.post('/api/tools/outreach-message', (req, res) => {
+  try {
+    const { portfolio } = req.body || {};
+    const nome = portfolio?.nome || 'Profissional';
+    const skills = (portfolio?.skills || []).slice(0, 3).join(', ') || 'execucao e resultado';
+    const message = `Oi! Sou ${nome} e posso contribuir com ${skills}. Posso te enviar 2 cases rapidos para avaliacao?`;
+    res.json({ message });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao gerar mensagem de outreach' });
+  }
+});
+
+httpServer.listen(PORT, () => console.log(`CPS Backend running on port ${PORT}`));

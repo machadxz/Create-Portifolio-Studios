@@ -1,169 +1,167 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { apiFetch } from '../lib/api';
+import { normalizePlanId, PLAN_IDS, PLAN_CONFIG } from '../lib/plans';
 import { useTheme } from '../context/ThemeContext';
 import { 
   Check, 
-  X, 
   Crown, 
-  Zap, 
-  Star,
+  Zap,
+  TrendingUp,
+  DollarSign,
+  Building2,
+  Rocket,
+  ArrowRight,
+  Shield,
+  Users,
+  Target,
   Sparkles,
-  Clock
+  Crown as CrownIcon
 } from 'lucide-react';
 import './Planos.css';
 
+const goalColors = {
+  'Entrada e Aquisição': '#6b7280',
+  'Profissionalização': '#8b5cf6',
+  'Otimização': '#10b981',
+  'Geração de Receita': '#f59e0b',
+  'Escala e Autoridade': '#ef4444'
+};
+
 const Planos = () => {
-  const { user, isAuthenticated, getDaysLeft, token } = useAuth();
+  const { user } = useAuth();
   const { getThemeColors } = useTheme();
   const themeColors = getThemeColors();
 
-  const handleUpgrade = async () => {
-    try {
-      const response = await apiFetch('/api/users/upgrade', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (response.ok) {
-        window.location.reload();
-      }
-    } catch (err) {
-      console.error('Erro ao fazer upgrade:', err);
-    }
-  };
+  const currentPlan = normalizePlanId(user?.plano);
 
   const plans = [
     {
-      id: 'free',
-      name: 'Teste',
-      price: 'R$0',
-      period: '',
-      description: 'Perfeito para começar',
-      icon: <Star size={24} />,
-      features: [
-        { text: '10 dias de teste', included: true },
-        { text: '1 portfólio', included: true },
-        { text: '3 templates básicos', included: true },
-        { text: 'Preview desktop/mobile', included: true },
-        { text: 'Templates premium', included: false },
-        { text: 'Exportação HTML completa', included: false },
-        { text: 'Auto Build com IA', included: false },
-        { text: 'Link compartilhável', included: false }
-      ],
+      id: PLAN_IDS.FREE,
+      ...PLAN_CONFIG[PLAN_IDS.FREE],
+      icon: Sparkles,
       cta: 'Começar Grátis',
-      highlighted: false
+      highlighted: false,
+      goalTag: 'Entrada e Aquisição'
     },
     {
-      id: 'sub',
-      name: 'PRO',
-      price: 'R$40',
-      period: '2 meses',
-      description: 'Para profissionais sérios',
-      icon: <Crown size={24} />,
-      features: [
-        { text: 'Acesso por 2 meses', included: true },
-        { text: 'Portfólios ilimitados', included: true },
-        { text: 'Todos os templates', included: true },
-        { text: 'Preview desktop/mobile', included: true },
-        { text: 'Templates premium', included: true },
-        { text: 'Exportação HTML completa', included: true },
-        { text: 'Auto Build com IA', included: true },
-        { text: 'Link compartilhável', included: true }
-      ],
-      cta: 'Fazer Upgrade',
-      highlighted: true
+      id: PLAN_IDS.STARTER,
+      ...PLAN_CONFIG[PLAN_IDS.STARTER],
+      icon: CrownIcon,
+      cta: 'Começar Starter',
+      highlighted: false,
+      goalTag: 'Profissionalização'
+    },
+    {
+      id: PLAN_IDS.GROWTH,
+      ...PLAN_CONFIG[PLAN_IDS.GROWTH],
+      icon: TrendingUp,
+      cta: 'Plano Mais Popular',
+      highlighted: true,
+      goalTag: 'Otimização'
+    },
+    {
+      id: PLAN_IDS.REVENUE,
+      ...PLAN_CONFIG[PLAN_IDS.REVENUE],
+      icon: DollarSign,
+      cta: 'Começar Revenue',
+      highlighted: false,
+      goalTag: 'Geração de Receita'
+    },
+    {
+      id: PLAN_IDS.EMPIRE,
+      ...PLAN_CONFIG[PLAN_IDS.EMPIRE],
+      icon: Building2,
+      cta: 'Escalar com Empire',
+      highlighted: false,
+      goalTag: 'Escala e Autoridade'
     }
   ];
+
+  const currentPlanIndex = plans.findIndex(p => p.id === currentPlan);
 
   return (
     <div className="planos-page">
       <div className="container">
         <div className="page-header">
           <div className="header-badge">
-            <Zap size={18} />
-            <span>Oferta Especial</span>
+            <Rocket size={18} />
+            <span>Transforme seu portfólio em resultados</span>
           </div>
           <h1>Escolha seu plano</h1>
-          <p>Invista no seu futuro profissional com um portfólio de destaque</p>
-          
-          {isAuthenticated && user?.plano === 'FREE' && (
-            <div className="trial-banner">
-              <Clock size={20} />
-              <span>Você tem <strong>{getDaysLeft()} dias</strong> restantes no período de teste</span>
-            </div>
-          )}
+          <p>Cada plano é desenhado para te levar ao próximo nível</p>
         </div>
 
         <div className="plans-grid">
-          {plans.map((plan) => (
-            <div 
-              key={plan.id}
-              className={`plan-card ${plan.highlighted ? 'highlighted' : ''}`}
-            >
-              {plan.highlighted && (
-                <div className="plan-badge">
-                  <Sparkles size={14} />
-                  Mais Popular
-                </div>
-              )}
-              
-              <div className="plan-header">
-                <div className="plan-icon" style={{ color: plan.highlighted ? themeColors.primary : undefined }}>
-                  {plan.icon}
-                </div>
-                <h3>{plan.name}</h3>
-                <div className="plan-price">
-                  <span className="price">{plan.price}</span>
-                  {plan.period && <span className="period">{plan.period}</span>}
-                </div>
-                <p className="plan-description">{plan.description}</p>
-              </div>
-
-              <ul className="plan-features">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className={feature.included ? 'included' : 'excluded'}>
-                    {feature.included ? (
-                      <Check size={18} />
-                    ) : (
-                      <X size={18} />
-                    )}
-                    <span>{feature.text}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="plan-cta">
-                {plan.id === 'free' ? (
-                  <Link 
-                    to="/register" 
-                    className={`btn ${plan.highlighted ? 'btn-primary' : 'btn-secondary'} btn-lg`}
-                  >
-                    {plan.cta}
-                  </Link>
-                ) : (
-                  <Link 
-                    to="/checkout" 
-                    className="btn btn-primary btn-lg"
-                    disabled={user?.plano === 'SUB'}
-                  >
-                    {user?.plano === 'SUB' ? (
-                      <>
-                        <Crown size={18} />
-                        Plano Ativo
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles size={18} />
-                        {plan.cta}
-                      </>
-                    )}
-                  </Link>
+          {plans.map((plan, index) => {
+            const Icon = plan.icon;
+            const isCurrentOrHigher = currentPlanIndex >= index;
+            const goalColor = goalColors[plan.goal] || themeColors.primary;
+            
+            return (
+              <div 
+                key={plan.id}
+                className={`plan-card ${plan.highlighted ? 'highlighted' : ''} ${isCurrentOrHigher ? 'current-or-higher' : ''}`}
+              >
+                {plan.highlighted && (
+                  <div className="plan-badge">
+                    <Zap size={14} />
+                    Mais Popular
+                  </div>
                 )}
+                
+                {isCurrentOrHigher && plan.id !== PLAN_IDS.FREE && (
+                  <div className="current-badge" style={{ background: goalColor }}>
+                    <Check size={14} />
+                    Ativo
+                  </div>
+                )}
+                
+                <div className="plan-header">
+                  <div className="plan-goal-tag" style={{ color: goalColor, borderColor: goalColor }}>
+                    <Target size={14} />
+                    {plan.goal}
+                  </div>
+                  <div className="plan-icon" style={{ color: plan.highlighted ? themeColors.primary : goalColor }}>
+                    <Icon size={32} />
+                  </div>
+                  <h3>{plan.name}</h3>
+                  <div className="plan-price">
+                    <span className="price">{plan.priceLabel}</span>
+                    {plan.period && <span className="period">{plan.period}</span>}
+                  </div>
+                  <p className="plan-description">{plan.description}</p>
+                </div>
+
+                <ul className="plan-features">
+                  {plan.features.map((feature, idx) => (
+                    <li key={idx} className="included">
+                      <Check size={16} />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="plan-cta">
+                  {plan.id === PLAN_IDS.FREE ? (
+                    <Link to="/register" className="btn btn-secondary btn-lg btn-full">
+                      {plan.cta}
+                    </Link>
+                  ) : isCurrentOrHigher ? (
+                    <button className="btn btn-lg btn-full" style={{ background: goalColor, opacity: 0.7, cursor: 'default' }} disabled>
+                      <Check size={18} />
+                      Plano Ativo
+                    </button>
+                  ) : (
+                    <Link to={`/checkout?plan=${plan.id}`} className="btn btn-primary btn-lg btn-full" style={{ background: goalColor }}>
+                      <ArrowRight size={18} />
+                      {plan.cta}
+                    </Link>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="guarantee">
@@ -179,35 +177,64 @@ const Planos = () => {
           </div>
         </div>
 
+        <div className="testimonials-section">
+          <h2>O que nossos usuários dizem</h2>
+          <div className="testimonials-grid">
+            <div className="testimonial-card">
+              <p>"Com o plano Starter, meu portfólio mudou completamente. Agora pareço muito mais profissional e minhas propostas têm mais valor."</p>
+              <div className="testimonial-author">
+                <Users size={20} />
+                <span>Desenvolvedor Freelancer</span>
+              </div>
+            </div>
+            <div className="testimonial-card">
+              <p>"O Growth me ajudou a otimizar meu portfólio. O tráfego aumentou 40% e as pessoas passam mais tempo nas minhas páginas."</p>
+              <div className="testimonial-author">
+                <Users size={20} />
+                <span>Designer UX</span>
+              </div>
+            </div>
+            <div className="testimonial-card">
+              <p>"Com o Revenue, consegui meus primeiros clientes via portfólio. As ferramentas de captura de leads funcionam muito bem."</p>
+              <div className="testimonial-author">
+                <Users size={20} />
+                <span>Desenvolvedor Fullstack</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="faq">
           <h2>Perguntas Frequentes</h2>
           <div className="faq-grid">
             <div className="faq-item">
-              <h4>Como funciona o teste grátis?</h4>
+              <h4>Qual a diferença entre os planos?</h4>
               <p>
-                Ao criar sua conta, você tem 10 dias para testar todos os recursos premium. 
-                Depois, você pode escolher fazer upgrade por R$ 40 ou continuar com acesso limitado.
+                Cada plano foca em um objetivo específico: do básico (FREE) até escala máxima (EMPIRE).
+                O Starter é ideal para profissionalização, Growth para otimização, Revenue para conseguir clientes,
+                e EMPIRE para escala com múltiplos portfólios.
               </p>
             </div>
             <div className="faq-item">
-              <h4>O que está incluído no plano PRO?</h4>
+              <h4>Posso fazer upgrade a qualquer momento?</h4>
               <p>
-                Acesso por 2 meses a todos os templates premium, exportação HTML completa, 
-                Auto Build com IA, portfólios ilimitados e link compartilhável.
+                Sim! Você pode fazer upgrade quando quiser. O valor é ajustado proporcionalmente
+                ao tempo restante do seu plano atual.
               </p>
             </div>
             <div className="faq-item">
-              <h4>Posso cancelar a qualquer momento?</h4>
+              <h4>Como funciona o plano FREE?</h4>
               <p>
-                Sim! O acesso é por 2 meses. 
-                Não há mensalidades ou cobranças recorrentes.
+                O plano FREE é vitalício e inclui o básico para você começar: 1 portfólio,
+                templates essenciais e 50 ferramentas do MegaToolkit. Perfeito para testar a plataforma.
               </p>
             </div>
             <div className="faq-item">
-              <h4>Como funciona a exportação?</h4>
+              <h4>O que são as ferramentas de conversão?</h4>
               <p>
-                Você pode baixar seu portfólio como um arquivo HTML completo com CSS integrado. 
-                Funciona em qualquer hospedagem, sem dependências.
+                As ferramentas de conversão (disponíveis a partir do Growth) incluem:
+                landing pages de captura, funis, email automation e测算 de conversão -
+                tudo desenhado para transformar visitantes em clientes.
               </p>
             </div>
           </div>
@@ -216,11 +243,5 @@ const Planos = () => {
     </div>
   );
 };
-
-const Shield = ({ size }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-  </svg>
-);
 
 export default Planos;

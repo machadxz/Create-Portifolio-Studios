@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { apiFetch } from '../lib/api';
+import { normalizePlanId, PLAN_IDS } from '../lib/plans';
 import { 
   Users, Crown, BarChart3, FolderOpen, Settings, FileText,
   RefreshCw, Check, X, AlertCircle, Eye, Trash2, Edit,
@@ -85,7 +86,7 @@ const Admin = () => {
 
   const updateUserPlan = async (uid, plano) => {
     try {
-      await fetch(`/api/admin/users/${uid}/plan`, {
+      await apiFetch(`/api/admin/users/${uid}/plan`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ plano })
@@ -99,7 +100,7 @@ const Admin = () => {
   const deleteUser = async (uid) => {
     if (!confirm('Tem certeza que deseja deletar este usuário?')) return;
     try {
-      await fetch(`/api/admin/users/${uid}`, {
+      await apiFetch(`/api/admin/users/${uid}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -112,7 +113,7 @@ const Admin = () => {
   const deletePortfolio = async (id) => {
     if (!confirm('Tem certeza que deseja deletar este portfólio?')) return;
     try {
-      await fetch(`/api/admin/portfolios/${id}`, {
+      await apiFetch(`/api/admin/portfolios/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -124,7 +125,7 @@ const Admin = () => {
 
   const approveTemplate = async (id, featured) => {
     try {
-      await fetch(`/api/admin/templates/${id}/approve`, {
+      await apiFetch(`/api/admin/templates/${id}/approve`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ featured })
@@ -137,7 +138,7 @@ const Admin = () => {
 
   const rejectTemplate = async (id) => {
     try {
-      await fetch(`/api/admin/templates/${id}/reject`, {
+      await apiFetch(`/api/admin/templates/${id}/reject`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ reason: 'Não atende aos padrões' })
@@ -151,7 +152,7 @@ const Admin = () => {
   const deleteTemplate = async (id) => {
     if (!confirm('Tem certeza que deseja deletar este template?')) return;
     try {
-      await fetch(`/api/admin/templates/${id}`, {
+      await apiFetch(`/api/admin/templates/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -264,8 +265,9 @@ const Admin = () => {
                     <Crown size={32} />
                   </div>
                   <div className="stat-info">
-                    <span className="stat-value">{stats.users?.sub || 0}</span>
-                    <span className="stat-label">Assinantes PRO</span>
+                    <span className="stat-value">{stats.users?.paid || 0}</span>
+                    <span className="stat-label">Assinantes Pagos</span>
+                    <span className="stat-subline">STARTER: {stats.users?.starter || 0} · GROWTH: {stats.users?.growth || 0} · REVENUE: {stats.users?.revenue || 0} · EMPIRE: {stats.users?.empire || 0}</span>
                     <span className="stat-trend positive">+5% este mês</span>
                   </div>
                 </div>
@@ -353,8 +355,8 @@ const Admin = () => {
                         </td>
                         <td>{u.email}</td>
                         <td>
-                          <span className={`plan-badge ${u.plano?.toLowerCase()}`}>
-                            {u.plano === 'SUB' ? 'PRO' : 'FREE'}
+                          <span className={`plan-badge ${normalizePlanId(u.plano).toLowerCase()}`}>
+                            {normalizePlanId(u.plano)}
                           </span>
                         </td>
                         <td>{u.createdAt ? new Date(u.createdAt).toLocaleDateString('pt-BR') : '-'}</td>
@@ -363,17 +365,17 @@ const Admin = () => {
                         </td>
                         <td>
                           <div className="action-buttons">
-                            {u.plano === 'FREE' ? (
-                              <button className="btn btn-sm btn-success" onClick={() => updateUserPlan(u.uid, 'SUB')}>
-                                <Crown size={14} />
-                                Upgrade
-                              </button>
-                            ) : (
-                              <button className="btn btn-sm btn-warning" onClick={() => updateUserPlan(u.uid, 'FREE')}>
-                                <X size={14} />
-                                Downgrade
-                              </button>
-                            )}
+                            <select
+                              className="plan-select"
+                              value={normalizePlanId(u.plano)}
+                              onChange={(e) => updateUserPlan(u.uid, e.target.value)}
+                            >
+                              <option value={PLAN_IDS.FREE}>FREE</option>
+                              <option value={PLAN_IDS.STARTER}>STARTER</option>
+                              <option value={PLAN_IDS.GROWTH}>GROWTH</option>
+                              <option value={PLAN_IDS.REVENUE}>REVENUE</option>
+                              <option value={PLAN_IDS.EMPIRE}>EMPIRE</option>
+                            </select>
                             {u.uid !== user?.uid && (
                               <button className="btn btn-sm btn-danger" onClick={() => deleteUser(u.uid)}>
                                 <Trash2 size={14} />

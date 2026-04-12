@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { normalizePlanId, PLAN_IDS } from '../lib/plans';
 import Mascot from './Mascot';
 import { 
   Home, 
@@ -110,8 +111,8 @@ const Navbar = () => {
               <div className="user-info">
                 <User size={18} />
                 <span>{user?.nome}</span>
-                <span className={`plan-badge ${user?.plano.toLowerCase()}`}>
-                  {user?.plano === 'SUB' ? 'PRO' : 'FREE'}
+                <span className={`plan-badge ${normalizePlanId(user?.plano).toLowerCase()}`}>
+                  {normalizePlanId(user?.plano)}
                 </span>
               </div>
               <button className="btn btn-ghost" onClick={handleLogout}>

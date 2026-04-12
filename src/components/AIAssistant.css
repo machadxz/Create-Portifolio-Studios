@@ -1,6 +1,6 @@
 .ai-assistant-collapsed {
   position: fixed;
-  bottom: 20px;
+  bottom: 80px;
   right: 20px;
   z-index: 1000;
   display: flex;

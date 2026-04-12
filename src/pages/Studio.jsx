@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AIAssistant from '../components/AIAssistant';
+import PlanTools from '../components/PlanTools';
 import PortfolioChecklist from '../components/PortfolioChecklist';
 import SEOOptimizer from '../components/SEOOptimizer';
 import ProjectTemplates from '../components/ProjectTemplates';
@@ -10,7 +11,11 @@ import CaseStudyBuilder from '../components/CaseStudyBuilder';
 import ProposalBuilder from '../components/ProposalBuilder';
 import PricingCalculator from '../components/PricingCalculator';
 import VersionControl from '../components/VersionControl';
+import GrowthToolkit from '../components/GrowthToolkit';
+import MegaToolkit50 from '../components/MegaToolkit50';
+import MegaToolkit150 from '../components/MegaToolkit150';
 import { apiFetch } from '../lib/api';
+import { normalizePlanId, PLAN_IDS, isPaidPlan as isPaidPlanCheck } from '../lib/plans';
 import { 
   Save, Eye, Download, Sparkles, Plus, Trash2, Monitor, Smartphone,
   Link, Copy, Check, X, Palette, Github, Zap, Type, MousePointer2,
@@ -243,6 +248,19 @@ const Studio = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showAiModal, setShowAiModal] = useState(false);
   const [showRecruiterPreview, setShowRecruiterPreview] = useState(false);
+  const [resumeTheme, setResumeTheme] = useState('site');
+  const [resumeData, setResumeData] = useState({
+    titulo: 'Desenvolvedor(a) Frontend',
+    email: '',
+    telefone: '',
+    cidade: '',
+    linkedin: '',
+    github: '',
+    objetivo: '',
+    experiencias: '',
+    escolas: '',
+    certificacoes: ''
+  });
   
   const [editorElements, setEditorElements] = useState([]);
   const [selectedElement, setSelectedElement] = useState(null);
@@ -257,6 +275,25 @@ const Studio = () => {
   const [history, setHistory] = useState([]);
   const [historyStep, setHistoryStep] = useState(-1);
   const canvasRef = useRef(null);
+  const normalizedPlan = normalizePlanId(user?.plano);
+  const isPaidPlan = isPaidPlanCheck(normalizedPlan);
+  const isPro = isPaidPlan;
+  
+  const getPlanLabel = (plan) => {
+    const labels = {
+      'FREE': 'FREE',
+      'STARTER': 'Starter',
+      'GROWTH': 'Growth',
+      'REVENUE': 'Revenue',
+      'EMPIRE': 'Empire'
+    };
+    return labels[plan] || plan;
+  };
+
+  const planOrder = ['FREE', 'STARTER', 'GROWTH', 'REVENUE', 'EMPIRE'];
+  const hasGrowth = planOrder.indexOf(normalizedPlan) >= planOrder.indexOf('GROWTH');
+  const hasRevenue = planOrder.indexOf(normalizedPlan) >= planOrder.indexOf('REVENUE');
+  const hasEmpire = planOrder.indexOf(normalizedPlan) >= planOrder.indexOf('EMPIRE');
 
   const saveToHistory = (newElements) => {
     const newHistory = history.slice(0, historyStep + 1);
@@ -494,6 +531,7 @@ const Studio = () => {
     { id: 'projects', label: 'Projetos' },
     { id: 'design', label: 'Design' },
     { id: 'editor', label: 'Editor' },
+    { id: 'resume', label: 'Curriculo' },
     { id: 'tools', label: 'Tools' }
   ];
 
@@ -523,6 +561,93 @@ const Studio = () => {
       return;
     }
     setPortfolio(versionData);
+  };
+
+  const resumePreviewTheme = {
+    clear: { bg: '#ffffff', text: '#0f172a', muted: '#475569', card: '#f8fafc', accent: '#0f172a', border: '#e2e8f0' },
+    dark: { bg: '#0b1220', text: '#f8fafc', muted: '#94a3b8', card: '#111827', accent: '#60a5fa', border: '#334155' },
+    site: { bg: '#ffffff', text: '#0f172a', muted: '#475569', card: '#f8fafc', accent: temaCores[portfolio.tema] || '#3b82f6', border: `${temaCores[portfolio.tema] || '#3b82f6'}55` }
+  };
+
+  const rp = resumePreviewTheme[resumeTheme] || resumePreviewTheme.site;
+
+  const generateResumePdf = () => {
+    const baseColors = {
+      clear: { bg: '#ffffff', text: '#0f172a', muted: '#475569', card: '#f8fafc', accent: '#0f172a', border: '#e2e8f0' },
+      dark: { bg: '#0b1220', text: '#f8fafc', muted: '#94a3b8', card: '#111827', accent: '#60a5fa', border: '#334155' },
+      site: { bg: '#ffffff', text: '#0f172a', muted: '#475569', card: '#f8fafc', accent: temaCores[portfolio.tema] || '#3b82f6', border: `${temaCores[portfolio.tema] || '#3b82f6'}55` }
+    };
+
+    const c = baseColors[resumeTheme] || baseColors.site;
+    const nome = portfolio.nome || 'Seu Nome';
+    const bio = portfolio.bio || 'Resumo profissional';
+    const projetos = (portfolio.projetos || []).slice(0, 4);
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Curriculo - ${nome}</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: ${c.bg}; color: ${c.text}; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .resume { max-width: 900px; margin: 0 auto; padding: 28px; }
+    .header { border-bottom: 2px solid ${c.accent}; padding-bottom: 14px; margin-bottom: 18px; }
+    .name { font-size: 30px; font-weight: 700; margin: 0 0 6px 0; }
+    .role { font-size: 16px; color: ${c.muted}; margin: 0; }
+    .contacts { margin-top: 8px; font-size: 13px; color: ${c.muted}; }
+    .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
+    .section { margin-bottom: 14px; }
+    .section h2 { font-size: 15px; margin: 0 0 8px 0; color: ${c.accent}; }
+    .card { background: ${c.card}; border: 1px solid ${c.border}; border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+    .muted { color: ${c.muted}; font-size: 13px; line-height: 1.45; }
+  </style>
+</head>
+<body>
+  <div class="resume">
+    <div class="header">
+      <h1 class="name">${nome}</h1>
+      <p class="role">${resumeData.titulo || 'Profissional'}</p>
+      <p class="contacts">${resumeData.email || ''} ${resumeData.telefone ? ' • ' + resumeData.telefone : ''} ${resumeData.cidade ? ' • ' + resumeData.cidade : ''}</p>
+      <p class="contacts">${resumeData.linkedin || ''} ${resumeData.github ? ' • ' + resumeData.github : ''}</p>
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="section">
+          <h2>Resumo</h2>
+          <p class="muted">${resumeData.objetivo || bio}</p>
+        </div>
+        <div class="section">
+          <h2>Experiencia</h2>
+          <p class="muted">${resumeData.experiencias || 'Adicione suas experiencias aqui.'}</p>
+        </div>
+        <div class="section">
+          <h2>Projetos em destaque</h2>
+          ${projetos.map((p) => `<div class="card"><strong>${p.titulo || 'Projeto'}</strong><p class="muted">${p.descricao || ''}</p></div>`).join('') || '<p class="muted">Sem projetos ainda.</p>'}
+        </div>
+      </div>
+
+      <div>
+        <div class="section">
+          <h2>Escolas / Faculdades</h2>
+          <p class="muted">${resumeData.escolas || 'Adicione suas instituicoes de estudo.'}</p>
+        </div>
+        <div class="section">
+          <h2>Certificacoes</h2>
+          <p class="muted">${resumeData.certificacoes || 'Adicione certificacoes relevantes.'}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    w.print();
   };
 
   return (
@@ -611,6 +736,30 @@ const Studio = () => {
                 </div>
               </div>
             )}
+            {activeSection === 'resume' && (
+              <div className="sidebar-section">
+                <h3>Curriculo PDF</h3>
+                <div className="resume-theme-switch">
+                  <button className={resumeTheme === 'site' ? 'active' : ''} onClick={() => setResumeTheme('site')}>Tema do site</button>
+                  <button className={resumeTheme === 'clear' ? 'active' : ''} onClick={() => setResumeTheme('clear')}>Claro</button>
+                  <button className={resumeTheme === 'dark' ? 'active' : ''} onClick={() => setResumeTheme('dark')}>Escuro</button>
+                </div>
+                <p className="resume-hint">Escolha o tema e clique em baixar. O PDF sera gerado no estilo selecionado.</p>
+
+                <div className="input-group"><label>Titulo profissional</label><input type="text" value={resumeData.titulo} onChange={(e) => setResumeData({ ...resumeData, titulo: e.target.value })} placeholder="Ex: Desenvolvedor Frontend" /></div>
+                <div className="input-group"><label>Email</label><input type="text" value={resumeData.email} onChange={(e) => setResumeData({ ...resumeData, email: e.target.value })} placeholder="seu@email.com" /></div>
+                <div className="input-group"><label>Telefone</label><input type="text" value={resumeData.telefone} onChange={(e) => setResumeData({ ...resumeData, telefone: e.target.value })} placeholder="(00) 00000-0000" /></div>
+                <div className="input-group"><label>Cidade</label><input type="text" value={resumeData.cidade} onChange={(e) => setResumeData({ ...resumeData, cidade: e.target.value })} placeholder="Cidade - Estado" /></div>
+                <div className="input-group"><label>LinkedIn</label><input type="text" value={resumeData.linkedin} onChange={(e) => setResumeData({ ...resumeData, linkedin: e.target.value })} placeholder="linkedin.com/in/seu-perfil" /></div>
+                <div className="input-group"><label>GitHub</label><input type="text" value={resumeData.github} onChange={(e) => setResumeData({ ...resumeData, github: e.target.value })} placeholder="github.com/seu-user" /></div>
+                <div className="input-group"><label>Resumo / Objetivo</label><textarea rows={3} value={resumeData.objetivo} onChange={(e) => setResumeData({ ...resumeData, objetivo: e.target.value })} placeholder="Resumo objetivo e direto" /></div>
+                <div className="input-group"><label>Experiencia</label><textarea rows={4} value={resumeData.experiencias} onChange={(e) => setResumeData({ ...resumeData, experiencias: e.target.value })} placeholder="Liste experiencias mais importantes" /></div>
+                <div className="input-group"><label>Escolas / Faculdades</label><textarea rows={3} value={resumeData.escolas} onChange={(e) => setResumeData({ ...resumeData, escolas: e.target.value })} placeholder="Nome da instituicao, curso e periodo" /></div>
+                <div className="input-group"><label>Certificacoes</label><textarea rows={3} value={resumeData.certificacoes} onChange={(e) => setResumeData({ ...resumeData, certificacoes: e.target.value })} placeholder="Certificacoes relevantes" /></div>
+
+                <button className="btn btn-primary" onClick={generateResumePdf}><FileText size={16} />Baixar Curriculo em PDF</button>
+              </div>
+            )}
             {activeSection === 'editor' && (
               <div className="sidebar-section editor-section">
                 <div className="editor-toolbar-section"><h3><Layers size={18} />Editor Visual</h3><div className="editor-actions"><button className="editor-action-btn" onClick={handleUndo} title="Desfazer"><RotateCcw size={16} /></button><button className="editor-action-btn" onClick={handleRedo} title="Refazer"><RotateCw size={16} /></button><button className="editor-action-btn" onClick={handleDuplicate} title="Duplicar"><Copy size={16} /></button></div></div>
@@ -644,7 +793,7 @@ const Studio = () => {
             )}
             {activeSection === 'tools' && (
               <div className="sidebar-section">
-                <h3>Ferramentas Pro</h3>
+                <h3>Ferramentas {getPlanLabel(normalizedPlan)}</h3>
                 <PortfolioChecklist portfolio={portfolio} />
                 <VersionControl
                   portfolioData={{ portfolio, editorElements }}
@@ -654,39 +803,142 @@ const Studio = () => {
                 <SEOOptimizer portfolio={portfolio} />
                 <ProjectTemplates onSelect={applyProjectTemplate} />
                 <CaseStudyBuilder onSave={saveCaseStudyProject} />
-                <ProposalBuilder />
-                <PricingCalculator />
+                <GrowthToolkit portfolio={portfolio} />
+                <MegaToolkit50 portfolio={portfolio} />
+                <PlanTools portfolio={portfolio} />
+
+                <div className="pro-tools-block">
+                  <div className="pro-tools-header">
+                    <h4>Ferramentas Avançadas</h4>
+                    <span className={`plan-chip ${isPro ? 'active' : 'locked'}`}>{getPlanLabel(normalizedPlan)} ativo</span>
+                  </div>
+
+                  {/* MegaToolkit150 - STARTER+ */}
+                  {normalizedPlan === PLAN_IDS.STARTER || normalizedPlan === PLAN_IDS.GROWTH || normalizedPlan === PLAN_IDS.REVENUE || normalizedPlan === PLAN_IDS.EMPIRE ? (
+                    <MegaToolkit150 portfolio={portfolio} />
+                  ) : (
+                    <div className="pro-locked-card">
+                      <h5>Mega Toolkit 150 (Starter+)</h5>
+                      <p>150 funções avançadas de crescimento, carreira, comercial e automação.</p>
+                    </div>
+                  )}
+
+                  {/* PricingCalculator - REVENUE+ */}
+                  {normalizedPlan === PLAN_IDS.REVENUE || normalizedPlan === PLAN_IDS.EMPIRE ? (
+                    <PricingCalculator />
+                  ) : (
+                    <div className="pro-locked-card">
+                      <h5>Calculadora de Preços (Revenue+)</h5>
+                      <p>Calcule precificação inteligente por horas, complexidade e urgência.</p>
+                    </div>
+                  )}
+
+                  {/* ProposalBuilder - REVENUE+ */}
+                  {normalizedPlan === PLAN_IDS.REVENUE || normalizedPlan === PLAN_IDS.EMPIRE ? (
+                    <ProposalBuilder />
+                  ) : (
+                    <div className="pro-locked-card">
+                      <h5>Construtor de Propostas (Revenue+)</h5>
+                      <p>Gere propostas comerciais profissionais com escopo, prazo e valor.</p>
+                    </div>
+                  )}
+
+                  {/* Empire Only Features */}
+                  {normalizedPlan === PLAN_IDS.EMPIRE ? (
+                    <div className="empire-tools">
+                      <h5>🌟 Funcionalidades Empire</h5>
+                      <ul>
+                        <li>White Label Ativo - Sem marca CPS</li>
+                        <li>Gestão de Múltiplos Clientes</li>
+                        <li>API de Portfólios</li>
+                        <li>Domínios Ilimitados</li>
+                        <li>CDN Global</li>
+                        <li>Suporte Prioritário</li>
+                        <li>Consultoria Estratégica Mensal</li>
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
               </div>
             )}
           </div>
         )}
         <div className="studio-preview">
           <div className={`preview-container ${previewMode}`}>
-            <div className="preview-wrapper" data-theme={portfolio.tema}>
-              <div className="preview-portfolio">
-                <div className="preview-header">
-                  <div className="preview-avatar" style={portfolio.avatar ? { backgroundImage: `url(${portfolio.avatar})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>{!portfolio.avatar && (portfolio.nome || '').charAt(0).toUpperCase()}</div>
-                  <h1>{portfolio.nome || 'Nome'}</h1>
-                  <p>{portfolio.bio || 'Bio'}</p>
+            {activeSection === 'resume' ? (
+              <div className="resume-preview" style={{ background: rp.bg, color: rp.text }}>
+                <div className="resume-preview-header" style={{ borderBottomColor: rp.accent }}>
+                  <h1>{portfolio.nome || 'Seu Nome'}</h1>
+                  <p>{resumeData.titulo || 'Titulo profissional'}</p>
+                  <span style={{ color: rp.muted }}>{resumeData.email || 'email@exemplo.com'} {resumeData.telefone ? `• ${resumeData.telefone}` : ''} {resumeData.cidade ? `• ${resumeData.cidade}` : ''}</span>
                 </div>
-                <div className="preview-section">
-                  <h2>Skills</h2>
-                  <div className="preview-skills">{portfolio.skills.length > 0 ? portfolio.skills.map((skill, i) => <span key={i} className="preview-skill">{skill}</span>) : <span className="preview-empty">Skills</span>}</div>
-                </div>
-                <div className="preview-section">
-                  <h2>{showRecruiterPreview ? 'Top Projetos' : 'Projetos'}</h2>
-                  <div className="preview-projects">{portfolio.projetos.length > 0 ? portfolio.projetos.slice(0, showRecruiterPreview ? 3 : portfolio.projetos.length).map((project, i) => <div key={i} className="preview-project"><h3>{project.titulo}</h3><p>{project.descricao}</p>{project.link && <a href={project.link}>Ver →</a>}</div>) : <span className="preview-empty">Projetos</span>}</div>
-                </div>
-                {showRecruiterPreview && (
-                  <div className="preview-section">
-                    <h2>Contato Rapido</h2>
-                    <div className="preview-actions">
-                      <button className="preview-custom-button">Chamar para Entrevista</button>
+
+                <div className="resume-preview-grid">
+                  <div>
+                    <div className="resume-preview-section">
+                      <h3 style={{ color: rp.accent }}>Resumo</h3>
+                      <p style={{ color: rp.muted }}>{resumeData.objetivo || portfolio.bio || 'Resumo profissional aparecerá aqui.'}</p>
+                    </div>
+                    <div className="resume-preview-section">
+                      <h3 style={{ color: rp.accent }}>Experiência</h3>
+                      <div className="resume-preview-card" style={{ background: rp.card, borderColor: rp.border }}>
+                        <p style={{ color: rp.muted }}>{resumeData.experiencias || 'Adicione suas experiências para visualizar.'}</p>
+                      </div>
+                    </div>
+                    <div className="resume-preview-section">
+                      <h3 style={{ color: rp.accent }}>Projetos</h3>
+                      {(portfolio.projetos || []).slice(0, 3).map((project, i) => (
+                        <div key={i} className="resume-preview-card" style={{ background: rp.card, borderColor: rp.border }}>
+                          <strong>{project.titulo || 'Projeto'}</strong>
+                          <p style={{ color: rp.muted }}>{project.descricao || 'Descrição do projeto'}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                )}
+
+                  <div>
+                    <div className="resume-preview-section">
+                      <h3 style={{ color: rp.accent }}>Escolas / Faculdades</h3>
+                      <div className="resume-preview-card" style={{ background: rp.card, borderColor: rp.border }}>
+                        <p style={{ color: rp.muted }}>{resumeData.escolas || 'Adicione instituições de estudo.'}</p>
+                      </div>
+                    </div>
+                    <div className="resume-preview-section">
+                      <h3 style={{ color: rp.accent }}>Certificações</h3>
+                      <div className="resume-preview-card" style={{ background: rp.card, borderColor: rp.border }}>
+                        <p style={{ color: rp.muted }}>{resumeData.certificacoes || 'Adicione certificações relevantes.'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="preview-wrapper" data-theme={portfolio.tema}>
+                <div className="preview-portfolio">
+                  <div className="preview-header">
+                    <div className="preview-avatar" style={portfolio.avatar ? { backgroundImage: `url(${portfolio.avatar})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>{!portfolio.avatar && (portfolio.nome || '').charAt(0).toUpperCase()}</div>
+                    <h1>{portfolio.nome || 'Nome'}</h1>
+                    <p>{portfolio.bio || 'Bio'}</p>
+                  </div>
+                  <div className="preview-section">
+                    <h2>Skills</h2>
+                    <div className="preview-skills">{portfolio.skills.length > 0 ? portfolio.skills.map((skill, i) => <span key={i} className="preview-skill">{skill}</span>) : <span className="preview-empty">Skills</span>}</div>
+                  </div>
+                  <div className="preview-section">
+                    <h2>{showRecruiterPreview ? 'Top Projetos' : 'Projetos'}</h2>
+                    <div className="preview-projects">{portfolio.projetos.length > 0 ? portfolio.projetos.slice(0, showRecruiterPreview ? 3 : portfolio.projetos.length).map((project, i) => <div key={i} className="preview-project"><h3>{project.titulo}</h3><p>{project.descricao}</p>{project.link && <a href={project.link}>Ver →</a>}</div>) : <span className="preview-empty">Projetos</span>}</div>
+                  </div>
+                  {showRecruiterPreview && (
+                    <div className="preview-section">
+                      <h2>Contato Rapido</h2>
+                      <div className="preview-actions">
+                        <button className="preview-custom-button">Chamar para Entrevista</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

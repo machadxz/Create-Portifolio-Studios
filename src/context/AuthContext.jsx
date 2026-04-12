@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { isPaidPlan, normalizePlanId, PLAN_IDS } from '../lib/plans';
 
 const AuthContext = createContext();
 
@@ -47,14 +48,20 @@ export const AuthProvider = ({ children }) => {
 
   const isTrialExpired = () => {
     if (!user) return true;
-    if (user.plano === 'SUB') return false;
+    const plan = normalizePlanId(user.plano);
+    if (isPaidPlan(plan)) {
+      if (!user.planExpiration) return false;
+      return new Date() > new Date(user.planExpiration);
+    }
     const expiration = new Date(user.trialExpiration);
     return new Date() > expiration;
   };
 
   const getDaysLeft = () => {
     if (!user) return 0;
-    const expiration = new Date(user.trialExpiration);
+    const plan = normalizePlanId(user.plano);
+    const expiration = new Date(plan === PLAN_IDS.FREE ? user.trialExpiration : user.planExpiration);
+    if (Number.isNaN(expiration.getTime())) return 0;
     const now = new Date();
     const diff = expiration - now;
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));

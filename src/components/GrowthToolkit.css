@@ -1,0 +1,127 @@
+.growth-toolkit {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.growth-toolkit h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin: 0;
+}
+
+.gt-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.gt-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.gt-card-header strong {
+  color: var(--text-primary);
+}
+
+.gt-progress {
+  height: 7px;
+  background: var(--bg-secondary);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.gt-progress > div {
+  height: 100%;
+  background: var(--accent);
+}
+
+.gt-list {
+  display: grid;
+  gap: 6px;
+}
+
+.gt-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.gt-item.ok { color: #22c55e; }
+.gt-item.warn { color: #f59e0b; }
+
+.gt-copy-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.gt-copy-row p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.gt-copy-row button {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.gt-pill {
+  font-size: 10px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+}
+
+.gt-plan {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 12px;
+  display: grid;
+  gap: 5px;
+}
+
+.gt-segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.gt-segmented button {
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.gt-segmented button.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.gt-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}

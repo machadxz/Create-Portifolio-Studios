@@ -19,6 +19,7 @@ import StudioEditor from './components/editor/StudioEditor';
 import Navbar from './components/Navbar';
 import SplashScreen from './components/SplashScreen';
 import MaintenanceScreen from './components/MaintenanceScreen';
+import SupportChat from './components/SupportChat';
 import { apiFetch } from './lib/api';
 import './styles/App.css';
 
@@ -91,6 +92,7 @@ function AppContent() {
           <Route path="/editor-visual" element={<StudioEditor />} />
         </Routes>
       </main>
+      <SupportChat />
     </div>
   );
 }
