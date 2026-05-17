@@ -1,0 +1,261 @@
+export const MOODS = {
+  futurista: {
+    id: 'futurista',
+    nome: 'Futurista',
+    descricao: 'Tech-driven com glow neon e linhas dinâmicas',
+    colors: {
+      primary: '#06b6d4',
+      secondary: '#3b82f6',
+      accent: '#a855f7',
+      bg: '#020617',
+      surface: '#0f172a',
+      card: '#1e293b',
+      text: '#f1f5f9',
+      muted: '#94a3b8',
+      glow: 'rgba(6,182,212,0.3)',
+      border: 'rgba(6,182,212,0.15)',
+    },
+    fonts: { heading: "'Inter', sans-serif", body: "'Inter', sans-serif", mono: "'JetBrains Mono', monospace" },
+    radius: { sm: 6, md: 10, lg: 16, xl: 24 },
+    spacing: { section: 80, element: 24, compact: 12 },
+    background: 'aurora',
+    animation: 'spring',
+    effects: { glow: true, particles: true, grid: true, blur: true },
+  },
+  minimalista: {
+    id: 'minimalista',
+    nome: 'Minimalista',
+    descricao: 'Limpo, espaçoso e elegante',
+    colors: {
+      primary: '#ffffff',
+      secondary: '#a0a0b0',
+      accent: '#6366f1',
+      bg: '#0a0a0a',
+      surface: '#121212',
+      card: '#1a1a1a',
+      text: '#f5f5f5',
+      muted: '#737373',
+      glow: 'rgba(99,102,241,0.2)',
+      border: 'rgba(255,255,255,0.06)',
+    },
+    fonts: { heading: "'Inter', sans-serif", body: "'Inter', sans-serif", mono: "'JetBrains Mono', monospace" },
+    radius: { sm: 4, md: 8, lg: 12, xl: 16 },
+    spacing: { section: 120, element: 32, compact: 16 },
+    background: 'none',
+    animation: 'fade',
+    effects: { glow: false, particles: false, grid: false, blur: true },
+  },
+  apple: {
+    id: 'apple',
+    nome: 'Apple-like',
+    descricao: 'Clean, branco e tipografia San Francisco',
+    colors: {
+      primary: '#1d1d1f',
+      secondary: '#6e6e73',
+      accent: '#0071e3',
+      bg: '#f5f5f7',
+      surface: '#ffffff',
+      card: '#ffffff',
+      text: '#1d1d1f',
+      muted: '#6e6e73',
+      glow: 'rgba(0,113,227,0.15)',
+      border: 'rgba(0,0,0,0.06)',
+    },
+    fonts: { heading: "-apple-system, 'SF Pro Display', sans-serif", body: "-apple-system, 'SF Pro Text', sans-serif", mono: "'SF Mono', monospace" },
+    radius: { sm: 8, md: 12, lg: 16, xl: 20 },
+    spacing: { section: 100, element: 28, compact: 14 },
+    background: 'none',
+    animation: 'fade',
+    effects: { glow: false, particles: false, grid: false, blur: false },
+  },
+  cyberpunk: {
+    id: 'cyberpunk',
+    nome: 'Cyberpunk',
+    descricao: 'Neon intenso, grids e vibe hacker',
+    colors: {
+      primary: '#00ff41',
+      secondary: '#ff00ff',
+      accent: '#00ffff',
+      bg: '#0a0a0f',
+      surface: '#0f0f1a',
+      card: '#1a1a2e',
+      text: '#00ff41',
+      muted: '#6b7280',
+      glow: 'rgba(0,255,65,0.3)',
+      border: 'rgba(0,255,65,0.2)',
+    },
+    fonts: { heading: "'Orbitron', sans-serif", body: "'Rajdhani', sans-serif", mono: "'JetBrains Mono', monospace" },
+    radius: { sm: 2, md: 4, lg: 6, xl: 8 },
+    spacing: { section: 60, element: 20, compact: 8 },
+    background: 'grid',
+    animation: 'spring',
+    effects: { glow: true, particles: true, grid: true, blur: false },
+  },
+  indie: {
+    id: 'indie',
+    nome: 'Indie Dev',
+    descricao: 'Vibe criativa, cores vibrantes e pessoal',
+    colors: {
+      primary: '#f59e0b',
+      secondary: '#ec4899',
+      accent: '#8b5cf6',
+      bg: '#0f0d1a',
+      surface: '#1a1530',
+      card: '#231f3d',
+      text: '#faf5ff',
+      muted: '#a78bfa',
+      glow: 'rgba(245,158,11,0.25)',
+      border: 'rgba(245,158,11,0.12)',
+    },
+    fonts: { heading: "'Space Grotesk', sans-serif", body: "'Inter', sans-serif", mono: "'Fira Code', monospace" },
+    radius: { sm: 8, md: 14, lg: 20, xl: 28 },
+    spacing: { section: 80, element: 24, compact: 12 },
+    background: 'particles',
+    animation: 'spring',
+    effects: { glow: true, particles: true, grid: false, blur: true },
+  },
+  brutalista: {
+    id: 'brutalista',
+    nome: 'Brutalista',
+    descricao: 'Pesado, geométrico e sem frescura',
+    colors: {
+      primary: '#dc2626',
+      secondary: '#171717',
+      accent: '#f97316',
+      bg: '#171717',
+      surface: '#262626',
+      card: '#333333',
+      text: '#fafafa',
+      muted: '#a3a3a3',
+      glow: 'rgba(220,38,38,0.2)',
+      border: 'rgba(220,38,38,0.3)',
+    },
+    fonts: { heading: "'Inter', sans-serif", body: "'Inter', sans-serif", mono: "'JetBrains Mono', monospace" },
+    radius: { sm: 0, md: 0, lg: 0, xl: 0 },
+    spacing: { section: 60, element: 16, compact: 8 },
+    background: 'none',
+    animation: 'fade',
+    effects: { glow: false, particles: false, grid: false, blur: false },
+  },
+  studioDark: {
+    id: 'studioDark',
+    nome: 'Studio Dark',
+    descricao: 'Profissional, escuro e sofisticado',
+    colors: {
+      primary: '#6366f1',
+      secondary: '#818cf8',
+      accent: '#a78bfa',
+      bg: '#080810',
+      surface: '#0f0f1a',
+      card: '#181825',
+      text: '#e2e8f0',
+      muted: '#7c7c8a',
+      glow: 'rgba(99,102,241,0.25)',
+      border: 'rgba(99,102,241,0.1)',
+    },
+    fonts: { heading: "'Inter', sans-serif", body: "'Inter', sans-serif", mono: "'JetBrains Mono', monospace" },
+    radius: { sm: 6, md: 10, lg: 14, xl: 18 },
+    spacing: { section: 90, element: 26, compact: 14 },
+    background: 'aurora',
+    animation: 'spring',
+    effects: { glow: true, particles: false, grid: true, blur: true },
+  },
+  neon: {
+    id: 'neon',
+    nome: 'Neon',
+    descricao: 'Luzes intensas e vibração elétrica',
+    colors: {
+      primary: '#22d3ee',
+      secondary: '#fb923c',
+      accent: '#e879f9',
+      bg: '#050510',
+      surface: '#0a0a1a',
+      card: '#151530',
+      text: '#e0e0ff',
+      muted: '#8080aa',
+      glow: 'rgba(34,211,238,0.35)',
+      border: 'rgba(34,211,238,0.15)',
+    },
+    fonts: { heading: "'Inter', sans-serif", body: "'Inter', sans-serif", mono: "'JetBrains Mono', monospace" },
+    radius: { sm: 4, md: 8, lg: 12, xl: 16 },
+    spacing: { section: 70, element: 22, compact: 10 },
+    background: 'particles',
+    animation: 'spring',
+    effects: { glow: true, particles: true, grid: true, blur: true },
+  },
+  corporate: {
+    id: 'corporate',
+    nome: 'Corporate',
+    descricao: 'Sóbrio, confiável e profissional',
+    colors: {
+      primary: '#2563eb',
+      secondary: '#3b82f6',
+      accent: '#1e40af',
+      bg: '#f8fafc',
+      surface: '#ffffff',
+      card: '#f1f5f9',
+      text: '#0f172a',
+      muted: '#64748b',
+      glow: 'rgba(37,99,235,0.15)',
+      border: 'rgba(0,0,0,0.08)',
+    },
+    fonts: { heading: "'Inter', sans-serif", body: "'Inter', sans-serif", mono: "'JetBrains Mono', monospace" },
+    radius: { sm: 4, md: 6, lg: 8, xl: 12 },
+    spacing: { section: 80, element: 24, compact: 12 },
+    background: 'none',
+    animation: 'fade',
+    effects: { glow: false, particles: false, grid: false, blur: false },
+  },
+  retro: {
+    id: 'retro',
+    nome: 'Retro Tech',
+    descricao: 'Vaporwave, nostalgia e CRT vibes',
+    colors: {
+      primary: '#ff71ce',
+      secondary: '#01cdfe',
+      accent: '#05ffa1',
+      bg: '#1a0b2e',
+      surface: '#2d1b4e',
+      card: '#3d2a6e',
+      text: '#ff71ce',
+      muted: '#b967ff',
+      glow: 'rgba(255,113,206,0.3)',
+      border: 'rgba(255,113,206,0.15)',
+    },
+    fonts: { heading: "'Orbitron', sans-serif", body: "'Inter', sans-serif", mono: "'VT323', monospace" },
+    radius: { sm: 4, md: 8, lg: 12, xl: 16 },
+    spacing: { section: 70, element: 20, compact: 10 },
+    background: 'grid',
+    animation: 'fade',
+    effects: { glow: true, particles: false, grid: true, blur: false },
+  },
+}
+
+export function getMood(id) {
+  return MOODS[id] || MOODS.futurista
+}
+
+export function applyMoodToCSS(mood) {
+  const m = getMood(mood)
+  const root = document.documentElement
+  const c = m.colors
+  root.style.setProperty('--mood-primary', c.primary)
+  root.style.setProperty('--mood-secondary', c.secondary)
+  root.style.setProperty('--mood-accent', c.accent)
+  root.style.setProperty('--mood-bg', c.bg)
+  root.style.setProperty('--mood-surface', c.surface)
+  root.style.setProperty('--mood-card', c.card)
+  root.style.setProperty('--mood-text', c.text)
+  root.style.setProperty('--mood-muted', c.muted)
+  root.style.setProperty('--mood-glow', c.glow)
+  root.style.setProperty('--mood-border', c.border)
+  root.style.setProperty('--mood-font-heading', m.fonts.heading)
+  root.style.setProperty('--mood-font-body', m.fonts.body)
+  root.style.setProperty('--mood-font-mono', m.fonts.mono)
+  root.style.setProperty('--mood-radius-sm', `${m.radius.sm}px`)
+  root.style.setProperty('--mood-radius-md', `${m.radius.md}px`)
+  root.style.setProperty('--mood-radius-lg', `${m.radius.lg}px`)
+  root.style.setProperty('--mood-radius-xl', `${m.radius.xl}px`)
+  root.style.setProperty('--mood-section-spacing', `${m.spacing.section}px`)
+  root.style.setProperty('--mood-element-spacing', `${m.spacing.element}px`)
+}

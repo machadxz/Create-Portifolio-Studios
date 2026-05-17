@@ -1,5 +1,5 @@
 # CPS - Create Portfolio Studio
-
+# Se você está usando este processo de nosso WebSite Você pode ocorrer riscos de DMCA (Digital Millennium Copyright Act) Sem autorização pelo Propietário do Site
 **"Crie seu portfólio em minutos. Impressione por anos."**
 
 ## Quick Start

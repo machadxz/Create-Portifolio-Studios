@@ -20,7 +20,9 @@ import Navbar from './components/Navbar';
 import SplashScreen from './components/SplashScreen';
 import MaintenanceScreen from './components/MaintenanceScreen';
 import SupportChat from './components/SupportChat';
+import CookieConsentCPS from './components/CookieConsentCPS';
 import { apiFetch } from './lib/api';
+import { storage } from './lib/storage';
 import './styles/App.css';
 
 function AppContent() {
@@ -29,13 +31,30 @@ function AppContent() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
+      setInitialized(true);
     }, 3500);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!showSplash && initialized) {
+      const savedRoute = storage.get('lastRoute');
+      if (savedRoute && savedRoute !== '/' && savedRoute !== location.pathname) {
+        navigate(savedRoute, { replace: true });
+      }
+    }
+  }, [showSplash, initialized]);
+
+  useEffect(() => {
+    if (!showSplash && location.pathname !== '/login' && location.pathname !== '/register') {
+      storage.set('lastRoute', location.pathname);
+    }
+  }, [location.pathname, showSplash]);
 
   useEffect(() => {
     const checkMaintenance = async () => {
@@ -93,6 +112,7 @@ function AppContent() {
         </Routes>
       </main>
       <SupportChat />
+      <CookieConsentCPS />
     </div>
   );
 }

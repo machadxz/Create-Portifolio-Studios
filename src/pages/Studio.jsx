@@ -14,6 +14,12 @@ import VersionControl from '../components/VersionControl';
 import GrowthToolkit from '../components/GrowthToolkit';
 import MegaToolkit50 from '../components/MegaToolkit50';
 import MegaToolkit150 from '../components/MegaToolkit150';
+import AIAutoBuild from '../components/AIAutoBuild';
+import MoodSelector from '../components/MoodSelector';
+import SmartImporter from '../components/SmartImporter';
+import BlockLibrary from '../components/BlockLibrary';
+import BackgroundEngine from '../components/BackgroundEngine';
+import { applyMoodToCSS, getMood } from '../lib/moods';
 import { apiFetch } from '../lib/api';
 import { normalizePlanId, PLAN_IDS, isPaidPlan as isPaidPlanCheck } from '../lib/plans';
 import { 
@@ -247,6 +253,8 @@ const Studio = () => {
   const [activeSection, setActiveSection] = useState('info');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showAiModal, setShowAiModal] = useState(false);
+  const [portfolioMood, setPortfolioMood] = useState('futurista');
+  const [placedBlocks, setPlacedBlocks] = useState([]);
   const [showRecruiterPreview, setShowRecruiterPreview] = useState(false);
   const [resumeTheme, setResumeTheme] = useState('site');
   const [resumeData, setResumeData] = useState({
@@ -462,6 +470,13 @@ const Studio = () => {
   const removeProject = (index) => setPortfolio({ ...portfolio, projetos: portfolio.projetos.filter((_, i) => i !== index) });
   const handleAutoBuild = () => setPortfolio({ ...portfolio, nome: 'Desenvolvedor Full Stack', bio: 'Apaixonado por criar soluções inovadoras', skills: ['JavaScript', 'React', 'Node.js', 'Python'] });
   const handleAiGenerate = async () => { setShowAiModal(false); };
+  const handleAiResult = (result) => {
+    setPortfolio({ nome: result.nome, bio: result.bio, skills: result.skills, projetos: result.projetos, tema: result.tema || portfolio.tema, template: result.template || portfolio.template, avatar: portfolio.avatar });
+    if (result.mood) { setPortfolioMood(result.mood); applyMoodToCSS(result.mood); }
+  };
+  const handleImportResult = (projetos) => {
+    setPortfolio((prev) => ({ ...prev, projetos: [...prev.projetos, ...projetos] }));
+  };
   const handleGithubImport = async () => { alert('Funcionalidade em desenvolvimento'); };
 
   useEffect(() => {
@@ -636,8 +651,10 @@ const Studio = () => {
           <h2>Certificacoes</h2>
           <p class="muted">${resumeData.certificacoes || 'Adicione certificacoes relevantes.'}</p>
         </div>
-      </div>
-    </div>
+                </div>
+                <div className="mt-4"><MoodSelector currentMood={portfolioMood} onSelect={(m) => { setPortfolioMood(m); applyMoodToCSS(m); }} /></div>
+                <div className="mt-4"><BlockLibrary placedBlocks={placedBlocks} onAddBlock={(block) => setPlacedBlocks((prev) => [...prev, { ...block, visible: true }])} onRemoveBlock={(id) => setPlacedBlocks((prev) => prev.filter((b) => b.id !== id))} onToggleVisibility={(id) => setPlacedBlocks((prev) => prev.map((b) => b.id === id ? { ...b, visible: !b.visible } : b))} /></div>
+              </div>
   </div>
 </body>
 </html>`;
@@ -708,6 +725,7 @@ const Studio = () => {
                 <div className="input-group"><label>Link</label><input type="text" value={newProject.link} onChange={(e) => setNewProject({...newProject, link: e.target.value})} placeholder="Link" style={inputStyle} /></div>
                 <button className="btn btn-primary" onClick={addProject}><Plus size={16} />Adicionar Projeto</button>
                 <div className="items-list">{portfolio.projetos.map((p, i) => <div key={i} className="item"><span>{p.titulo}</span><button onClick={() => removeProject(i)}><X size={14} /></button></div>)}</div>
+                <div className="mt-3"><SmartImporter onImport={handleImportResult} /></div>
               </div>
             )}
             {activeSection === 'design' && (
@@ -913,8 +931,9 @@ const Studio = () => {
                 </div>
               </div>
             ) : (
-              <div className="preview-wrapper" data-theme={portfolio.tema}>
-                <div className="preview-portfolio">
+              <div className="preview-wrapper" data-theme={portfolio.tema} style={{ position: 'relative', overflow: 'hidden' }}>
+                <BackgroundEngine mood={portfolioMood} />
+                <div className="preview-portfolio" style={{ position: 'relative', zIndex: 1 }}>
                   <div className="preview-header">
                     <div className="preview-avatar" style={portfolio.avatar ? { backgroundImage: `url(${portfolio.avatar})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>{!portfolio.avatar && (portfolio.nome || '').charAt(0).toUpperCase()}</div>
                     <h1>{portfolio.nome || 'Nome'}</h1>
@@ -942,17 +961,11 @@ const Studio = () => {
           </div>
         </div>
       </div>
-      {showAiModal && (
-        <div className="modal-overlay" onClick={() => setShowAiModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3><Sparkles size={20} />Gerar Portfólio com IA</h3>
-            <button className="modal-close" onClick={() => setShowAiModal(false)}><X size={20} /></button>
-            <p>Descreva como quer seu portfólio:</p>
-            <textarea placeholder="Ex: Desenvolvedor Python..." rows={4} />
-            <button className="btn btn-primary"><Zap size={20} />Gerar Portfólio</button>
-          </div>
-        </div>
-      )}
+      <AIAutoBuild
+        open={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        onResult={handleAiResult}
+      />
       <AIAssistant 
         portfolio={portfolio}
         editorElements={editorElements}

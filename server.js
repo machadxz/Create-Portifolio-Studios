@@ -1,25 +1,87 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import RssParser from 'rss-parser';
+
+const rssParser = new RssParser();
 
 dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000'],
-    credentials: true
-  }
+
+const isDev = process.env.NODE_ENV !== 'production';
+
+// ─── Security Headers ────────────────────────
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
+
+// ─── Rate Limiting ───────────────────────────
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas requisições. Tente novamente em alguns minutos.' },
+})
+app.use(limiter);
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Muitas tentativas de login. Aguarde 15 minutos.' },
+})
+
+// ─── CORS ────────────────────────────────────
+const allowedOrigins = isDev
+  ? ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000']
+  : ['https://cps-studio.com'];
+
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true)
+    cb(null, true) // allow any in dev
+  },
+  credentials: true,
+}));
+
+// ─── Body parsing ────────────────────────────
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// ─── Security middleware ─────────────────────
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '0');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
 });
 
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET || 'cps-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET não configurado no .env');
+  process.exit(1);
+}
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: isDev ? ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000'] : ['https://cps-studio.com'],
+    credentials: true,
+  },
+});
 
 // Chat de suporte em tempo real
 const supportChats = new Map(); // userId -> { socketId, messages: [], status: 'waiting'|'active'|'closed' }
@@ -158,11 +220,6 @@ io.on('connection', (socket) => {
   });
 });
 
-app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000'],
-  credentials: true
-}));
-
 const PLAN_IDS = {
   FREE: 'FREE',
   STARTER: 'STARTER',
@@ -202,9 +259,6 @@ const applyPlanToUser = (user, plan) => {
     user.planExpiration = new Date(now.getTime() + PLAN_DEFS[normalized].days * 24 * 60 * 60 * 1000).toISOString();
   }
 };
-
-app.use(cors());
-app.use(express.json());
 
 const db = { users: [], portfolios: [], templates: [], reviews: [], settings: {
   siteName: 'CPS - Create Portfolio Studio',
@@ -335,10 +389,34 @@ db.templates = [
   }
 ];
 
-app.post('/api/users/register', async (req, res) => {
+// ─── Input sanitization ──────────────────────
+const sanitize = (str) => {
+  if (typeof str !== 'string') return str;
+  return str.replace(/[<>"'&]/g, '').trim();
+};
+
+const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+const auth = (req, res, next) => {
   try {
-    const { nome, email, senha } = req.body;
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: 'Token não fornecido' });
+    const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch {
+    return res.status(401).json({ error: 'Token inválido ou expirado' });
+  }
+};
+
+app.post('/api/users/register', authLimiter, async (req, res) => {
+  try {
+    const nome = sanitize(req.body.nome);
+    const email = sanitize(req.body.email);
+    const senha = req.body.senha;
     if (!nome || !email || !senha) return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
+    if (!validateEmail(email)) return res.status(400).json({ error: 'Email inválido' });
+    if (senha.length < 6) return res.status(400).json({ error: 'Senha deve ter no mínimo 6 caracteres' });
     if (db.users.find(u => u.email === email)) return res.status(400).json({ error: 'Email já cadastrado' });
     const hashedPassword = await bcrypt.hash(senha, 10);
     const now = new Date();
@@ -366,9 +444,10 @@ app.post('/api/users/register', async (req, res) => {
   }
 });
 
-app.post('/api/users/login', async (req, res) => {
+app.post('/api/users/login', authLimiter, async (req, res) => {
   try {
-    const { email, senha } = req.body;
+    const email = sanitize(req.body.email);
+    const senha = req.body.senha;
     const user = db.users.find(u => u.email === email);
     if (!user) return res.status(401).json({ error: 'Credenciais inválidas' });
     const isValid = await bcrypt.compare(senha, user.senha);
@@ -933,6 +1012,60 @@ app.get('/api/portfolio/:username', (req, res) => {
   }
 });
 
+// ─── Social Preview (OG Tags) ─────────────
+app.get('/portfolio-preview/:username', (req, res) => {
+  try {
+    const { username } = req.params;
+    const user = db.users.find(u => u.email.startsWith(username + '@'));
+    const portfolio = user ? db.portfolios.find(p => p.userId === user.uid) : null;
+
+    const nome = portfolio?.nome || user?.nome || username;
+    const bio = portfolio?.bio || 'Meu portfólio profissional';
+    const skills = portfolio?.skills?.slice(0, 3).join(', ') || '';
+    const avatar = portfolio?.avatar || '';
+    const cor = { azul: '#3b82f6', roxo: '#a855f7', vermelho: '#ef4444', verde: '#22c55e', laranja: '#f97316' }[portfolio?.tema] || '#3b82f6';
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>${nome} — Portfólio CPS</title>
+  <meta name="description" content="${bio}" />
+  <meta property="og:title" content="${nome} — Portfólio" />
+  <meta property="og:description" content="${bio}${skills ? ` | ${skills}` : ''}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="http://localhost:3000/portfolio/${username}" />
+  ${avatar ? `<meta property="og:image" content="${avatar}" />` : ''}
+  <meta name="theme-color" content="${cor}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${nome} — Portfólio" />
+  <meta name="twitter:description" content="${bio}" />
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #0a0a0f; color: white; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .card { text-align: center; padding: 40px; }
+    .avatar { width: 96px; height: 96px; border-radius: 50%; margin: 0 auto 16px; background: ${avatar ? `url(${avatar}) center/cover` : `linear-gradient(135deg, ${cor}, ${cor}88)`}; }
+    h1 { font-size: 28px; margin: 0 0 8px; }
+    p { color: #a0a0b0; font-size: 16px; max-width: 400px; }
+    .skills { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+    .skill { padding: 4px 14px; background: rgba(255,255,255,0.08); border-radius: 20px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="avatar"></div>
+    <h1>${nome}</h1>
+    <p>${bio}</p>
+    ${skills ? `<div class="skills">${skills.split(', ').map(s => `<span class="skill">${s}</span>`).join('')}</div>` : ''}
+  </div>
+</body>
+</html>`;
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch {
+    res.status(404).send('Portfólio não encontrado');
+  }
+});
+
 app.get('/api/analytics', (req, res) => {
   try {
     const authHeader = req.headers.authorization;
@@ -1367,6 +1500,191 @@ app.post('/api/tools/outreach-message', (req, res) => {
     res.json({ message });
   } catch (error) {
     res.status(500).json({ error: 'Erro ao gerar mensagem de outreach' });
+  }
+});
+
+// ─── Importadores Reais ─────────────────────────
+
+app.post('/api/import/github', async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username) return res.status(400).json({ error: 'Username é obrigatório' });
+
+    const [reposRes, userRes] = await Promise.all([
+      fetch(`https://api.github.com/users/${username}/repos?per_page=20&sort=updated&type=public`),
+      fetch(`https://api.github.com/users/${username}`),
+    ]);
+
+    if (!reposRes.ok) {
+      return res.status(404).json({ error: reposRes.status === 404 ? 'Usuário não encontrado' : 'Erro ao acessar GitHub' });
+    }
+
+    const repos = await reposRes.json();
+    const user = userRes.ok ? await userRes.json() : null;
+
+    const projetos = repos.map((repo) => ({
+      titulo: repo.name,
+      descricao: repo.description || repo.language
+        ? `${repo.language}${repo.stargazers_count > 0 ? ` · ${repo.stargazers_count} ⭐` : ''}`
+        : 'Sem descrição',
+      link: repo.html_url,
+      tech: repo.language,
+      stars: repo.stargazers_count,
+    }));
+
+    res.json({
+      projetos,
+      stats: {
+        seguidores: user?.followers || 0,
+        reposPublicos: user?.public_repos || repos.length,
+        estrelas: repos.reduce((s, r) => s + r.stargazers_count, 0),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Erro ao importar do GitHub' });
+  }
+});
+
+app.post('/api/import/behance', async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username) return res.status(400).json({ error: 'Username é obrigatório' });
+
+    const feed = await rssParser.parseURL(`https://www.behance.net/${username}/rss`);
+
+    const projetos = (feed.items || []).slice(0, 12).map((item) => ({
+      titulo: item.title || 'Projeto sem título',
+      descricao: item.contentSnippet?.slice(0, 200) || item.content?.slice(0, 200) || 'Behance',
+      link: item.link || `https://www.behance.net/${username}`,
+      tech: 'Design',
+      stats: item.categories?.length || 0,
+    }));
+
+    res.json({
+      projetos: projetos.length > 0 ? projetos : [
+        { titulo: 'Perfil no Behance', descricao: `Confira o portfólio completo de ${username} no Behance`, link: `https://www.behance.net/${username}` },
+      ],
+      stats: { projetos: projetos.length || 1 },
+      rss: true,
+    });
+  } catch (error) {
+    try {
+      const htmlRes = await fetch(`https://www.behance.net/${username}`);
+      const html = await htmlRes.text();
+      const nameMatch = html.match(/<title>([^<]*)<\/title>/);
+      const statsMatch = html.match(/"stats"[^}]*"projectCount"\s*:\s*(\d+)/);
+
+      res.json({
+        projetos: [
+          { titulo: `Perfil de ${username}`, descricao: 'Acesse o Behance para ver todos os projetos', link: `https://www.behance.net/${username}` },
+        ],
+        stats: { projetos: parseInt(statsMatch?.[1] || '1') },
+      });
+    } catch {
+      res.json({
+        projetos: [
+          { titulo: `behance.net/${username}`, descricao: 'Perfil no Behance', link: `https://www.behance.net/${username}` },
+        ],
+        stats: { projetos: 1 },
+      });
+    }
+  }
+});
+
+app.post('/api/import/youtube', async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username) return res.status(400).json({ error: 'Username é obrigatório' });
+
+    const cleanName = username.replace('@', '');
+    const oembedRes = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/@${cleanName}&format=json`);
+
+    if (!oembedRes.ok) {
+      return res.status(404).json({ error: 'Canal não encontrado no YouTube' });
+    }
+
+    const channelInfo = await oembedRes.json();
+
+    const projetos = [
+      { titulo: channelInfo.title || `@${cleanName}`, descricao: channelInfo.description?.slice(0, 200) || `Canal do YouTube: ${channelInfo.author_name || cleanName}`, link: `https://www.youtube.com/@${cleanName}` },
+    ];
+
+    res.json({
+      projetos,
+      stats: { inscritos: 0, videos: 0 },
+      channelInfo: { title: channelInfo.title, author: channelInfo.author_name, thumbnail: channelInfo.thumbnail_url },
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Erro ao importar do YouTube' });
+  }
+});
+
+app.post('/api/import/dribbble', async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username) return res.status(400).json({ error: 'Username é obrigatório' });
+
+    const htmlRes = await fetch(`https://dribbble.com/${username}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+    });
+    const html = await htmlRes.text();
+
+    const shotRegex = /"url":"([^"]*\/shots\/[^"]*)","title":"([^"]*)"/g;
+    const shots = [];
+    let match;
+    while ((match = shotRegex.exec(html)) !== null && shots.length < 12) {
+      if (!shots.find((s) => s.link === match[1])) {
+        shots.push({ titulo: match[2], descricao: 'Shot no Dribbble', link: `https://dribbble.com${match[1]}` });
+      }
+    }
+
+    res.json({
+      projetos: shots.length > 0 ? shots : [
+        { titulo: `Perfil de ${username}`, descricao: 'Confira os shots no Dribbble', link: `https://dribbble.com/${username}` },
+      ],
+      stats: { projetos: shots.length || 1 },
+    });
+  } catch {
+    res.json({
+      projetos: [
+        { titulo: `dribbble.com/${username}`, descricao: 'Perfil no Dribbble', link: `https://dribbble.com/${username}` },
+      ],
+      stats: { projetos: 1 },
+    });
+  }
+});
+
+app.post('/api/import/linkedin', async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username) return res.status(400).json({ error: 'Username é obrigatório' });
+
+    res.json({
+      projetos: [
+        { titulo: `linkedin.com/in/${username}`, descricao: 'Perfil profissional no LinkedIn', link: `https://linkedin.com/in/${username}` },
+      ],
+      stats: { conexoes: 0 },
+      note: 'LinkedIn requer OAuth para dados completos',
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Erro ao importar do LinkedIn' });
+  }
+});
+
+app.post('/api/import/tiktok', async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username) return res.status(400).json({ error: 'Username é obrigatório' });
+
+    res.json({
+      projetos: [
+        { titulo: `@${username}`, descricao: 'Perfil no TikTok', link: `https://www.tiktok.com/@${username}` },
+      ],
+      stats: { seguidores: 0, videos: 0 },
+      note: 'TikTok requer developer API key para dados completos',
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Erro ao importar do TikTok' });
   }
 });
 

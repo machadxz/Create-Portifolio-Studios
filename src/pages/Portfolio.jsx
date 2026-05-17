@@ -39,6 +39,11 @@ const PortfolioPublic = () => {
 
     if (username) {
       fetchPortfolio();
+      fetch('/api/analytics/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      }).catch(() => {});
     }
   }, [username]);
 
